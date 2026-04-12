@@ -467,7 +467,7 @@
         </div>
       </div>
       <!-- ごみ袋配布状況（設定時のみ表示） -->
-      <div class="app-card mb-3 d-none" id="garbageBagCard">
+      <div class="app-card mb-3" id="garbageBagCard">
         <div class="app-card-header"><i class="bi bi-bag me-1"></i><span id="gbCardTitle">ごみ袋</span>配布状況</div>
         <div class="app-card-body">
           <div class="d-flex gap-3 flex-wrap">
@@ -487,7 +487,7 @@
           <div class="rate-bar mt-2" style="height:8px">
             <div class="rate-bar-fill" id="gbRateBar" style="width:0%"></div>
           </div>
-          <div style="font-size:.75rem;color:#94a3b8;margin-top:3px" id="gbRateNote"></div>
+          <div style="font-size:.75rem;color:#94a3b8;margin-top:3px" id="gbRateNote">配布率 0%（0/0世帯）</div>
         </div>
       </div>
 
@@ -497,17 +497,19 @@
         <div style="overflow-x:auto">
           <table class="data-table">
             <thead>
-              <tr>
-                <th>班</th><th class="text-center">世帯</th>
-                <th class="text-center">済み</th><th class="text-center">未払い</th>
-                <th style="min-width:90px">進捗</th>
-              </tr>
+              <tr id="squadSummaryHeader"><th>班</th><th class="text-center">世帯</th>
+    <th class="text-center">済み</th><th class="text-center">未払い</th>
+    <th class="text-center" style="color:#3b82f6;font-size:.78rem"><i class="bi bi-bag me-1"></i>ごみ袋</th>
+    <th style="min-width:90px">進捗</th></tr>
             </thead>
             <tbody id="tbSquadSummary"><tr>
       <td style="font-weight:600">第1班</td>
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -515,6 +517,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -522,6 +527,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -529,6 +537,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -536,6 +547,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -543,6 +557,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -550,6 +567,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -557,6 +577,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -564,6 +587,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr><tr>
@@ -571,6 +597,9 @@
       <td class="text-center">0</td>
       <td class="text-center" style="color:var(--success);font-weight:700">0</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">0</td>
+      <td class="text-center" style="font-size:.83rem">
+        <span style="color:#94a3b8">—</span>
+      </td>
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:0%"></div></div>
           <span style="font-size:.72rem;color:#64748b">0%</span></td>
     </tr></tbody>
@@ -1252,7 +1281,8 @@ let S = {
     garbageBagEnabled:false, garbageBagName:'ごみ袋'
   },
   squads:[],
-  reports:[]
+  reports:[],
+  deletedIds:[]   // 削除済み報告IDを記録（同期時に復活させないため）
 };
 let pendingPayId=null, pendingReportId=null, contactType='phone';
 
@@ -1277,11 +1307,11 @@ function load(){
            || localStorage.getItem('chonaikai_sys_v1');
     if(raw){ const d=JSON.parse(raw);
       S.settings={...S.settings,...(d.settings||{})};
-      S.squads=d.squads||[]; S.reports=d.reports||[]; }
+      S.squads=d.squads||[]; S.reports=d.reports||[]; S.deletedIds=d.deletedIds||[]; }
   }catch(e){console.warn('load error',e);}
 }
 function save(){
-  localStorage.setItem(STORE_KEY,JSON.stringify({settings:S.settings,squads:S.squads,reports:S.reports}));
+  localStorage.setItem(STORE_KEY,JSON.stringify({settings:S.settings,squads:S.squads,reports:S.reports,deletedIds:S.deletedIds}));
 }
 
 // ── Toast ────────────────────────────────────────────────────────
@@ -1319,7 +1349,10 @@ async function doLogin(){
 // ── Admin Init ───────────────────────────────────────────────────
 function initAdmin(){
   ensureSquads(); refreshNavbar(); refreshFilterDropdowns();
-  updateReportBadge(); switchTab('dashboard');
+  updateReportBadge();
+  // GAS URL が設定済みなら同期ボタンを表示
+  document.getElementById('btnSyncGAS').style.display = S.settings.gasUrl ? '' : 'none';
+  switchTab('dashboard');
 }
 function refreshNavbar(){
   document.getElementById('navAssocName').textContent=S.settings.assocName;
@@ -1409,15 +1442,39 @@ function renderDashboard(){
   }
 
   const tbody=document.getElementById('tbSquadSummary');
-  if(!S.squads.length){ tbody.innerHTML='<tr><td colspan="5" class="text-center text-muted py-3">世帯が登録されていません</td></tr>'; return; }
+  const gbName=S.settings.garbageBagName||'ごみ袋';
+  // ヘッダー列：ごみ袋設定ON時のみごみ袋列を追加
+  const header=document.getElementById('squadSummaryHeader');
+  header.innerHTML=`<th>班</th><th class="text-center">世帯</th>
+    <th class="text-center">済み</th><th class="text-center">未払い</th>
+    ${gbEnabled?`<th class="text-center" style="color:#3b82f6;font-size:.78rem"><i class="bi bi-bag me-1"></i>${esc(gbName)}</th>`:''}
+    <th style="min-width:90px">進捗</th>`;
+  const cols=gbEnabled?6:5;
+  if(!S.squads.length){ tbody.innerHTML=`<tr><td colspan="${cols}" class="text-center text-muted py-3">世帯が登録されていません</td></tr>`; return; }
   tbody.innerHTML=S.squads.map(sq=>{
     const t=sq.households.length,p=sq.households.filter(h=>h.paid).length;
     const pc=t>0?Math.round(p/t*100):0;
+    let gbCell='';
+    if(gbEnabled){
+      const needs=sq.households.filter(h=>h.paid&&h.needsGarbageBag!==false).length;
+      const dist=sq.households.filter(h=>h.paid&&h.needsGarbageBag!==false&&h.garbageBagDistributed).length;
+      const remaining=needs-dist;
+      gbCell=`<td class="text-center" style="font-size:.83rem">
+        ${needs===0?'<span style="color:#94a3b8">—</span>'
+          :`<span style="color:#3b82f6;font-weight:700">${needs}</span>
+           <span style="color:#94a3b8;font-size:.7rem"> 件</span>
+           <br>
+           <span style="font-size:.7rem;color:${remaining>0?'#d97706':'#16a34a'}">
+             ${remaining>0?`未配布 ${remaining}`:'配布完了 ✅'}
+           </span>`}
+      </td>`;
+    }
     return `<tr>
       <td style="font-weight:600">${esc(sq.name)}</td>
       <td class="text-center">${t}</td>
       <td class="text-center" style="color:var(--success);font-weight:700">${p}</td>
       <td class="text-center" style="color:var(--danger);font-weight:700">${t-p}</td>
+      ${gbCell}
       <td><div class="mini-progress"><div class="mini-progress-bar" style="width:${pc}%"></div></div>
           <span style="font-size:.72rem;color:#64748b">${pc}%</span></td>
     </tr>`;
@@ -1569,6 +1626,9 @@ function confirmReport(){
   updateReportBadge(); renderReports(); renderDashboard(); pendingReportId=null;
 }
 function deleteReport(){
+  if(pendingReportId && !S.deletedIds.includes(pendingReportId)){
+    S.deletedIds.push(pendingReportId); // 同期時に復活しないよう記録
+  }
   S.reports=S.reports.filter(r=>r.id!==pendingReportId); save();
   bootstrap.Modal.getInstance(document.getElementById('modalReport')).hide();
   toast('報告を削除しました','info'); updateReportBadge(); renderReports(); pendingReportId=null;
@@ -2075,6 +2135,7 @@ async function syncFromGAS(){
     let added=0;
     data.forEach(r=>{
       if(!r.id)return;
+      if(S.deletedIds.includes(r.id))return; // 削除済みはスキップ
       const existing=S.reports.find(lr=>lr.id===r.id);
       if(!existing){ S.reports.push(r); added++; }
       else if(r.confirmed&&!existing.confirmed){ existing.confirmed=true; existing.confirmedAt=r.confirmedAt; }
