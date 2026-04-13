@@ -231,7 +231,7 @@
     }
   </style>
 </head>
-<body class="" style="">
+<body>
 
 <!-- ════════════════════════════════════════
      LOGIN
@@ -627,8 +627,7 @@
         <i class="bi bi-info-circle me-1"></i>
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
-      <div id="reportsContainer"><div class="text-center text-muted py-5">
-    <i class="bi bi-bell-slash" style="font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.4"></i>報告はありません</div></div>
+      <div id="reportsContainer"></div>
     </div>
 
     <!-- ── PAYMENTS ───────────────────────────────── -->
@@ -909,6 +908,28 @@
         </button>
       </div>
 
+      <!-- バックアップ・復元 -->
+      <div class="settings-section mt-3">
+        <div class="settings-header" style="color:#0369a1"><i class="bi bi-cloud-download"></i> バックアップ・復元（iPhoneホーム画面アプリ用）</div>
+        <div class="settings-body">
+          <div class="info-box mb-3" style="background:#eff6ff;border-color:#bfdbfe;font-size:.82rem">
+            <strong>📱 iPhoneのホーム画面アプリで使う場合</strong><br>
+            Safariとホームアプリはデータが別々のため、以下の手順で設定を移行してください。<br>
+            ① Safariで「設定をバックアップ」→ ファイルを保存<br>
+            ② ホーム画面アプリを開き「バックアップから復元」→ 保存したファイルを選択
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-primary btn-sm" onclick="backupData()">
+              <i class="bi bi-download me-1"></i>設定をバックアップ
+            </button>
+            <label class="btn btn-outline-primary btn-sm mb-0" style="cursor:pointer">
+              <i class="bi bi-upload me-1"></i>バックアップから復元
+              <input type="file" id="restoreFile" accept=".json" class="d-none" onchange="restoreData(this)">
+            </label>
+          </div>
+        </div>
+      </div>
+
       <!-- 初期化 -->
       <div class="settings-section mt-3">
         <div class="settings-header text-danger"><i class="bi bi-arrow-counterclockwise"></i> データの初期化</div>
@@ -927,7 +948,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge d-none" id="reportBadge">1</span></button>
+      <span class="nav-badge d-none" id="reportBadge">0</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1248,29 +1269,14 @@
 </div>
 
 <!-- Report Detail -->
-<div class="modal fade" id="modalReport" tabindex="-1" aria-hidden="true" style="display: none;">
+<div class="modal fade" id="modalReport" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-person-lines-fill me-2 text-primary"></i>報告詳細</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="reportModalBody">
-    <div class="report-info-row mb-2"><i class="bi bi-person-fill text-primary" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">お名前</div><strong>d</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-geo-alt-fill text-danger" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">ご住所</div><strong>s</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-people-fill text-warning" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">班名</div><strong>第1班</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-telephone-fill text-success" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">電話番号</div><strong>3</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-clock-fill text-secondary" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">報告日時</div><strong>2026/04/13 20:46</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-currency-yen text-warning" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">料金</div><strong>¥2,400</strong></div></div>
-    <div class="report-info-row mb-0"><i class="bi bi-bag text-info" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">ごみ袋</div><strong>必要</strong></div></div>
-    </div>
+      <div class="modal-body" id="reportModalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
         <button type="button" class="btn btn-danger btn-sm" id="btnDeleteReport"><i class="bi bi-trash me-1"></i>削除</button>
@@ -2290,6 +2296,54 @@ function exportEmbedded(){
     console.error('export error',e);
     toast('エクスポートに失敗しました: '+e.message,'danger');
   }
+}
+
+// ── バックアップ・復元 ────────────────────────────────────────────
+function backupData(){
+  const data = JSON.stringify({
+    settings: S.settings,
+    squads:   S.squads,
+    reports:  S.reports,
+    deletedIds: S.deletedIds,
+    _backup: true,
+    _version: STORE_KEY,
+    _date: new Date().toLocaleString('ja-JP')
+  }, null, 2);
+  const blob = new Blob([data], {type:'application/json;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (S.settings.assocName||'町内会') + '_バックアップ_' +
+    new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast('バックアップファイルを保存しました 💾','success');
+}
+function restoreData(input){
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const d = JSON.parse(e.target.result);
+      if(!d._backup) throw new Error('バックアップファイルではありません');
+      if(!confirm('現在のデータをバックアップから上書きします。よろしいですか？')) return;
+      S.settings  = {...S.settings, ...(d.settings||{})};
+      S.squads    = d.squads    || [];
+      S.reports   = d.reports   || [];
+      S.deletedIds= d.deletedIds|| [];
+      save();
+      // UI全体を再初期化
+      refreshNavbar(); refreshFilterDropdowns(); updatePublicView();
+      updateReportBadge();
+      document.getElementById('btnSyncGAS').style.display = S.settings.gasUrl ? '' : 'none';
+      renderSettings(); renderDashboard();
+      toast('バックアップから復元しました ✅','success');
+    }catch(err){
+      toast('復元に失敗しました：' + err.message, 'danger');
+    }
+    input.value = ''; // 同じファイルを再選択できるようリセット
+  };
+  reader.readAsText(file);
 }
 
 // ── データ初期化 ──────────────────────────────────────────────────
