@@ -231,7 +231,7 @@
     }
   </style>
 </head>
-<body>
+<body class="" style="">
 
 <!-- ════════════════════════════════════════
      LOGIN
@@ -289,7 +289,7 @@
     </div>
     <div class="public-card">
       <!-- Step1: QR + フォーム -->
-      <div id="pubStep1" class="d-none">
+      <div id="pubStep1">
         <div class="amount-box">
           <div style="font-size:.82rem;color:#475569;margin-bottom:.2rem">今年度の町内会費</div>
           <div class="amount-val" id="pubAmount">¥2,400</div>
@@ -326,7 +326,7 @@
             <!-- 班が設定されている場合はselect、未設定の場合はinputに切り替わる -->
             <select class="form-select" id="form-squad-select"><option value="">班を選択してください</option><option value="第1班">第1班</option><option value="第2班">第2班</option><option value="第3班">第3班</option><option value="第4班">第4班</option><option value="第5班">第5班</option><option value="第6班">第6班</option><option value="第7班">第7班</option><option value="第8班">第8班</option><option value="第9班">第9班</option><option value="第10班">第10班</option></select>
             <input type="text" class="form-control d-none" id="form-squad-text" placeholder="班名を入力してください（例: 1班、A班）">
-            <input type="hidden" id="form-squad" value="第1班">
+            <input type="hidden" id="form-squad">
           </div>
           <div class="mb-3">
             <label class="form-label">連絡先 <span class="text-danger">*</span></label>
@@ -373,23 +373,19 @@
             <input type="hidden" id="form-garbageBag" value="true">
           </div>
 
-          <button class="btn-submit-payment" id="btnSubmitPayment" onclick="submitPaymentReport()" disabled=""><span class="spinner-border spinner-border-sm me-2"></span>送信中...</button>
+          <button class="btn-submit-payment" id="btnSubmitPayment" onclick="submitPaymentReport()">
+            <i class="bi bi-check-circle-fill" style="font-size:1.2rem"></i>支払完了
+          </button>
         </div>
       </div><!-- /pubStep1 -->
       <!-- Step2: 完了 -->
-      <div id="pubStep2" class="success-screen">
+      <div id="pubStep2" class="d-none success-screen">
         <div class="success-icon">✅</div>
         <h3 style="font-weight:800;color:#16a34a">支払い報告を受け付けました</h3>
         <p class="text-muted" style="font-size:.88rem">
           ご報告ありがとうございます。<br>担当者が内容を確認次第、記録を更新します。
         </p>
-        <div id="pubConfirmDetail" class="bg-light rounded-3 p-3 text-start mt-2 mb-3" style="font-size:.83rem;line-height:1.8">
-    <table style="width:100%;border-collapse:collapse">
-      <tbody><tr><td style="width:90px;color:#64748b;padding:4px 0">お名前</td><td><strong>d</strong></td></tr>
-      <tr><td style="color:#64748b;padding:4px 0">住所</td><td><strong>s</strong></td></tr>
-      <tr><td style="color:#64748b;padding:4px 0">班名</td><td><strong>第1班</strong></td></tr>
-      <tr><td style="color:#64748b;padding:4px 0">連絡先</td><td><strong>3</strong></td></tr>
-    </tbody></table></div>
+        <div id="pubConfirmDetail" class="bg-light rounded-3 p-3 text-start mt-2 mb-3" style="font-size:.83rem;line-height:1.8"></div>
         <button class="btn btn-outline-secondary btn-sm" onclick="resetPublicForm()">
           <i class="bi bi-arrow-counterclockwise me-1"></i>別の方の報告をする
         </button>
@@ -631,7 +627,8 @@
         <i class="bi bi-info-circle me-1"></i>
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
-      <div id="reportsContainer"></div>
+      <div id="reportsContainer"><div class="text-center text-muted py-5">
+    <i class="bi bi-bell-slash" style="font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.4"></i>報告はありません</div></div>
     </div>
 
     <!-- ── PAYMENTS ───────────────────────────────── -->
@@ -930,7 +927,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge" id="reportBadge">1</span></button>
+      <span class="nav-badge d-none" id="reportBadge">1</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1251,14 +1248,29 @@
 </div>
 
 <!-- Report Detail -->
-<div class="modal fade" id="modalReport" tabindex="-1">
+<div class="modal fade" id="modalReport" tabindex="-1" aria-hidden="true" style="display: none;">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title"><i class="bi bi-person-lines-fill me-2 text-primary"></i>報告詳細</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="reportModalBody"></div>
+      <div class="modal-body" id="reportModalBody">
+    <div class="report-info-row mb-2"><i class="bi bi-person-fill text-primary" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">お名前</div><strong>d</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-geo-alt-fill text-danger" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">ご住所</div><strong>s</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-people-fill text-warning" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">班名</div><strong>第1班</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-telephone-fill text-success" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">電話番号</div><strong>3</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-clock-fill text-secondary" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">報告日時</div><strong>2026/04/13 20:46</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-currency-yen text-warning" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">料金</div><strong>¥2,400</strong></div></div>
+    <div class="report-info-row mb-0"><i class="bi bi-bag text-info" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">ごみ袋</div><strong>必要</strong></div></div>
+    </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
         <button type="button" class="btn btn-danger btn-sm" id="btnDeleteReport"><i class="bi bi-trash me-1"></i>削除</button>
