@@ -2195,66 +2195,62 @@ function printFlyer(){
   setTimeout(()=>w.print(),800);
 }
 
-// ── ntfy（Image GET 優先・4段階） ────────────────────────────────
-// ntfy.sh はGETリクエストでも通知送信に対応。
-// Image.src によるGETはCORSが完全に不要でどのブラウザでも確実に飛ぶ。
+// ── ntfy 送信（3段階フォールバック）────────────────────────────
+// ntfy.sh は POST のみ通知送信に対応（GETは受信用のため使用しない）
 async function sendNtfy(title,message){
   const topic=S.settings.ntfyTopic; if(!topic)return;
-  const body='【'+title+'】\n'+message.slice(0,400);
-  const getUrl='https://ntfy.sh/'+encodeURIComponent(topic)
-    +'?title='+encodeURIComponent(title)
-    +'&message='+encodeURIComponent(body)
-    +'&priority=4'
-    +'&tags='+encodeURIComponent('white_check_mark,yen_sign');
+  const shortMsg=message.slice(0,4000);
+  const topicUrl='https://ntfy.sh/'+encodeURIComponent(topic);
 
-  // ① Image GET（CORS完全不要・最も確実）
-  // ntfy.sh はGETでも通知送信できる。Imageタグはどのブラウザでも必ず送信される。
-  let imgOk=false;
+  // ① text/plain POST（シンプルリクエスト → CORSプリフライト不要・全ブラウザ対応）
+  //   タイトル・優先度はURLパラメータで指定、ボディにメッセージ本文
   try{
-    await new Promise((resolve)=>{
-      const img=new Image();
-      img.onload=img.onerror=()=>{ imgOk=true; resolve(); };
-      img.src=getUrl;
-      setTimeout(resolve,3000); // 3秒待っても応答なければ次へ
-    });
-    if(imgOk) return;
-  }catch(_){}
-
-  // ② fetch GET（レスポンス確認あり）
-  try{
-    const res=await fetch(getUrl);
+    const res=await fetch(
+      topicUrl+'?title='+encodeURIComponent(title)+'&priority=4&tags=white_check_mark%2Cyen_sign',
+      {method:'POST', headers:{'Content-Type':'text/plain'}, body:shortMsg}
+    );
     if(res.ok) return;
   }catch(_){}
 
-  // ③ POST JSON（通常ブラウザ向け）
+  // ② JSON POST（プリフライトあり・ntfy.sh はCORSに対応）
   try{
     const res=await fetch('https://ntfy.sh',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic,title,message:body,priority:4,tags:['white_check_mark','yen_sign']})
+      body:JSON.stringify({topic,title,message:shortMsg,priority:4,tags:['white_check_mark','yen_sign']})
     });
     if(res.ok) return;
   }catch(_){}
 
-  // ④ POST no-cors（LINE等の制限ブラウザ向け最終手段）
+  // ③ no-cors POST（LINE等の制限ブラウザ向け最終手段）
+  //   Content-Type:text/plain はシンプルヘッダーなので no-cors でも送信可能
   try{
-    await fetch('https://ntfy.sh/'+encodeURIComponent(topic),{
-      method:'POST',body,mode:'no-cors'
+    await fetch(topicUrl,{
+      method:'POST',
+      headers:{'Content-Type':'text/plain'},
+      body:'【'+title+'】\n'+shortMsg.slice(0,400),
+      mode:'no-cors'
     });
-  }catch(e){console.warn('ntfy all methods failed',e);}
+  }catch(e){console.warn('ntfy failed',e);}
 }
 
 // ── デバッグ用テスト送信（?debug=1 のときのみ使用） ──────────────
 async function dbgTestNtfy(){
   const topic=S.settings.ntfyTopic;
-  const gas=S.settings.gasUrl;
   const r=document.getElementById('dbgResult');
-  r.textContent='送信中...';
-  if(!topic){ r.style.color='#f87171'; r.textContent='❌ ntfyトピックが未設定'; return; }
-  r.style.color='#94a3b8';
-  await sendNtfy('【テスト】通知確認','このメッセージが届けば通知設定は正常です。');
-  r.style.color='#4ade80'; r.textContent='✅ 送信完了（スマホを確認）';
-  if(gas) r.textContent+=' / GAS:あり';
+  if(!topic){ r.style.color='#f87171'; r.textContent='❌ ntfyトピック未設定：住民用HTMLの再エクスポートが必要'; return; }
+  r.style.color='#94a3b8'; r.textContent='送信中...';
+  const topicUrl='https://ntfy.sh/'+encodeURIComponent(topic);
+  try{
+    const res=await fetch(
+      topicUrl+'?title='+encodeURIComponent('【テスト】通知確認')+'&priority=4',
+      {method:'POST', headers:{'Content-Type':'text/plain'}, body:'このメッセージが届けば通知設定は正常です。'}
+    );
+    if(res.ok){ r.style.color='#4ade80'; r.textContent='✅ ntfy送信成功（スマホのntfyアプリを確認してください）'; }
+    else{ r.style.color='#fb923c'; r.textContent='⚠️ ntfy応答エラー: HTTP '+res.status; }
+  }catch(e){
+    r.style.color='#f87171'; r.textContent='❌ 送信失敗: '+e.message;
+  }
 }
 async function testNtfy(){
   const topic=document.getElementById('set-ntfyTopic').value.trim();
