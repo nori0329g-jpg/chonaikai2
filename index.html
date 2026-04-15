@@ -289,6 +289,14 @@
     </div>
     <div class="public-card">
       <!-- Step1: QR + フォーム -->
+      <!-- デバッグバナー（URLに ?debug=1 を付けたときのみ表示） -->
+      <div id="debugBanner" class="d-none" style="background:#1e293b;color:#94a3b8;font-size:.72rem;padding:.5rem .75rem;border-radius:8px;margin-bottom:.75rem;line-height:1.8">
+        🔧 <strong style="color:#f1f5f9">デバッグモード</strong><br>
+        ntfyトピック: <span id="dbgNtfy" style="color:#4ade80"></span><br>
+        GAS URL: <span id="dbgGas" style="color:#4ade80"></span><br>
+        <button onclick="dbgTestNtfy()" style="margin-top:.4rem;background:#3b82f6;color:white;border:none;border-radius:6px;padding:3px 10px;font-size:.72rem;cursor:pointer">通知テスト送信</button>
+        <span id="dbgResult" style="margin-left:.5rem"></span>
+      </div>
       <div id="pubStep1">
         <div class="amount-box">
           <div style="font-size:.82rem;color:#475569;margin-bottom:.2rem">今年度の町内会費</div>
@@ -2187,36 +2195,66 @@ function printFlyer(){
   setTimeout(()=>w.print(),800);
 }
 
-// ── ntfy（3段階フォールバック） ───────────────────────────────────
+// ── ntfy（Image GET 優先・4段階） ────────────────────────────────
+// ntfy.sh はGETリクエストでも通知送信に対応。
+// Image.src によるGETはCORSが完全に不要でどのブラウザでも確実に飛ぶ。
 async function sendNtfy(title,message){
   const topic=S.settings.ntfyTopic; if(!topic)return;
-  // ① JSON API（通常ブラウザ向け・最優先）
+  const body='【'+title+'】\n'+message.slice(0,400);
+  const getUrl='https://ntfy.sh/'+encodeURIComponent(topic)
+    +'?title='+encodeURIComponent(title)
+    +'&message='+encodeURIComponent(body)
+    +'&priority=4'
+    +'&tags='+encodeURIComponent('white_check_mark,yen_sign');
+
+  // ① Image GET（CORS完全不要・最も確実）
+  // ntfy.sh はGETでも通知送信できる。Imageタグはどのブラウザでも必ず送信される。
+  let imgOk=false;
+  try{
+    await new Promise((resolve)=>{
+      const img=new Image();
+      img.onload=img.onerror=()=>{ imgOk=true; resolve(); };
+      img.src=getUrl;
+      setTimeout(resolve,3000); // 3秒待っても応答なければ次へ
+    });
+    if(imgOk) return;
+  }catch(_){}
+
+  // ② fetch GET（レスポンス確認あり）
+  try{
+    const res=await fetch(getUrl);
+    if(res.ok) return;
+  }catch(_){}
+
+  // ③ POST JSON（通常ブラウザ向け）
   try{
     const res=await fetch('https://ntfy.sh',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({topic,title,message,priority:4,tags:['white_check_mark','yen_sign']})
+      body:JSON.stringify({topic,title,message:body,priority:4,tags:['white_check_mark','yen_sign']})
     });
     if(res.ok) return;
   }catch(_){}
-  // ② プレーンテキスト no-cors（LINEブラウザ向け）
+
+  // ④ POST no-cors（LINE等の制限ブラウザ向け最終手段）
   try{
     await fetch('https://ntfy.sh/'+encodeURIComponent(topic),{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=UTF-8'},
-      body:'【'+title+'】\n'+message,
-      mode:'no-cors'
+      method:'POST',body,mode:'no-cors'
     });
-    return;
-  }catch(_){}
-  // ③ GETパラメータ経由（fetch完全不可の場合の最終手段）
-  try{
-    const url='https://ntfy.sh/'+encodeURIComponent(topic)
-      +'?title='+encodeURIComponent(title)
-      +'&message='+encodeURIComponent('【'+title+'】\n'+message.slice(0,200))
-      +'&priority=4';
-    new Image().src=url; // no-corsなimg要素でGETリクエスト送信
-  }catch(e2){console.warn('ntfy all methods failed',e2);}
+  }catch(e){console.warn('ntfy all methods failed',e);}
+}
+
+// ── デバッグ用テスト送信（?debug=1 のときのみ使用） ──────────────
+async function dbgTestNtfy(){
+  const topic=S.settings.ntfyTopic;
+  const gas=S.settings.gasUrl;
+  const r=document.getElementById('dbgResult');
+  r.textContent='送信中...';
+  if(!topic){ r.style.color='#f87171'; r.textContent='❌ ntfyトピックが未設定'; return; }
+  r.style.color='#94a3b8';
+  await sendNtfy('【テスト】通知確認','このメッセージが届けば通知設定は正常です。');
+  r.style.color='#4ade80'; r.textContent='✅ 送信完了（スマホを確認）';
+  if(gas) r.textContent+=' / GAS:あり';
 }
 async function testNtfy(){
   const topic=document.getElementById('set-ntfyTopic').value.trim();
@@ -2548,6 +2586,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   const _hash=window.location.hash;
   if(_params.get('view')==='public'||_hash==='#public'||_params.get('public')==='1'){
     showView('viewPublic');
+    // デバッグモード：?debug=1 のとき設定状態を表示
+    if(_params.get('debug')==='1'){
+      const banner=document.getElementById('debugBanner');
+      banner.classList.remove('d-none');
+      document.getElementById('dbgNtfy').textContent=
+        S.settings.ntfyTopic ? '✅ 設定済み（'+(S.settings.ntfyTopic.slice(0,4)+'****')+')' : '❌ 未設定';
+      document.getElementById('dbgGas').textContent=
+        S.settings.gasUrl ? '✅ 設定済み' : '❌ 未設定';
+    }
   } else if(!S.settings.pwHash && S.settings.assocName==='町内会費管理'){
     // 初回起動（パスワード未設定かつ初期値のまま）→ ウィザードを表示
     setTimeout(wizShow, 400);
