@@ -635,28 +635,7 @@
         <i class="bi bi-info-circle me-1"></i>
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
-      <div id="reportsContainer">
-    <div class="report-card " id="rc-r_1776461784918_xjia4n">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <div><span style="font-weight:800;font-size:1rem">ew</span>
-          <span class="ms-2 badge-pending">
-            <i class="bi bi-clock"></i>未確認</span></div>
-        <span style="font-size:.72rem;color:#94a3b8">2026/04/18 06:36</span>
-      </div>
-      <div class="report-info-row"><i class="bi bi-geo-alt"></i><span>tr</span></div>
-      <div class="report-info-row"><i class="bi bi-people"></i><span>第1班</span></div>
-      <div class="report-info-row"><i class="bi bi-telephone"></i><span>090</span></div>
-      <div class="report-info-row"><i class="bi bi-envelope"></i><span>fd</span></div>
-      <div class="report-info-row"><i class="bi bi-currency-yen"></i><span>¥2,400</span></div>
-      <div class="report-info-row"><i class="bi bi-bag"></i><span>ごみ袋: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
-      
-      <div class="d-flex gap-2 mt-2">
-        <button class="btn btn-success btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776461784918_xjia4n')">
-          <i class="bi bi-check me-1"></i>支払い済みに記録</button>
-        <button class="btn btn-outline-secondary btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776461784918_xjia4n')">
-          <i class="bi bi-eye me-1"></i>詳細</button>
-      </div>
-    </div></div>
+      <div id="reportsContainer"></div>
     </div>
 
     <!-- ── PAYMENTS ───────────────────────────────── -->
@@ -984,7 +963,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge" id="reportBadge">1</span></button>
+      <span class="nav-badge d-none" id="reportBadge">0</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1375,14 +1354,25 @@ async function hashPw(pw){
 
 // ── Storage ──────────────────────────────────────────────────────
 function load(){
-  // ① 埋め込みデータがあれば先に適用（住民用HTMLで使用）
   if(EMBEDDED_DATA){
+    // ── 住民用HTML（GitHub Pages等でホスト）──────────────────────────
+    // 設定・班データは常にEMBEDDED_DATAを優先（localStorageの古い設定で上書きしない）
+    // ※ localStorage上書きを許すと、管理者がnotifyEmailを変更して再エクスポートしても
+    //   住民端末の古いlocalStorageが優先され、メール通知が届かなくなるバグが生じる
     S.settings={...S.settings,...(EMBEDDED_DATA.settings||{})};
     S.squads=EMBEDDED_DATA.squads||[];
-    // reports は埋め込まない（住民端末で新規収集する）
+    // reportのみlocalStorageから復元（端末内での送信済み報告を保持するため）
+    try{
+      const raw=localStorage.getItem(STORE_KEY)
+             || localStorage.getItem('chonaikai_sys_v2')
+             || localStorage.getItem('chonaikai_sys_v1');
+      if(raw){ const d=JSON.parse(raw);
+        S.reports=d.reports||[]; S.deletedIds=d.deletedIds||[]; }
+    }catch(e){console.warn('load error',e);}
+    return; // settings/squadsはlocalStorageで上書きしない
   }
+  // ── 管理用HTML（localファイル）────────────────────────────────────
   try{
-    // ② localStorageがあればさらに上書き（同一端末での管理者操作を優先）
     const raw=localStorage.getItem(STORE_KEY)
            || localStorage.getItem('chonaikai_sys_v2')
            || localStorage.getItem('chonaikai_sys_v1');
@@ -1707,7 +1697,9 @@ function confirmReport(){
   // GAS連携：確認済みステータスを同期
   if(S.settings.gasUrl){
     const p=new URLSearchParams({action:'confirm',id:r.id,confirmedAt:r.confirmedAt});
-    fetch(S.settings.gasUrl+'?'+p).catch(e=>console.warn('GAS confirm error',e));
+    fetch(S.settings.gasUrl+'?'+p,{mode:'no-cors',credentials:'omit'})
+      .catch(()=>fetch(S.settings.gasUrl+'?'+p,{credentials:'omit',redirect:'follow'})
+      .catch(e=>console.warn('GAS confirm error',e)));
   }
   bootstrap.Modal.getInstance(document.getElementById('modalReport')).hide();
   toast(`✅ ${r.name} の支払いを記録しました`,'success');
@@ -2027,20 +2019,32 @@ function submitPaymentReport(){
   document.getElementById('pubStep2').classList.remove('d-none');
 
   // ── GASへ送信（Gmail通知はGAS側で処理・完了画面をブロックしない） ──
+  console.log('[submit] gasUrl:', S.settings.gasUrl ? '✅設定済み' : '❌未設定');
+  console.log('[submit] notifyEmail:', S.settings.notifyEmail ? '✅'+S.settings.notifyEmail : '❌未設定');
   (async()=>{
     if(S.settings.gasUrl){
+      const p=new URLSearchParams({
+        action:'submit', id:report.id, name, address,
+        squadName:squad, phone, email:emailContact, reportedAt:report.reportedAt,
+        notifyEmail: S.settings.notifyEmail||'',
+        ntfyTitle: `[${S.settings.assocName}] 支払完了報告`
+      });
+      const url=S.settings.gasUrl+'?'+p;
+      // ① no-cors優先（iOS PWA対応・レスポンスは不要）
+      try{
+        await fetch(url,{method:'GET', mode:'no-cors', credentials:'omit'});
+        console.log('[submit] GAS送信成功 (no-cors)');
+        return;
+      }catch(e){ console.warn('[submit] no-cors失敗:',e.message); }
+      // ② corsフォールバック
       try{
         const ctrl=new AbortController();
-        const tid=setTimeout(()=>ctrl.abort(),8000);
-        const p=new URLSearchParams({
-          action:'submit', id:report.id, name, address,
-          squadName:squad, phone, email:emailContact, reportedAt:report.reportedAt,
-          notifyEmail: S.settings.notifyEmail||'',
-          ntfyTitle: `[${S.settings.assocName}] 支払完了報告`
-        });
-        await fetch(S.settings.gasUrl+'?'+p,{signal:ctrl.signal});
-        clearTimeout(tid);
-      }catch(e){console.warn('GAS submit error',e);}
+        setTimeout(()=>ctrl.abort(),8000);
+        await fetch(url,{signal:ctrl.signal, credentials:'omit', redirect:'follow'});
+        console.log('[submit] GAS送信成功 (cors)');
+      }catch(e){ console.warn('[submit] GAS submit error',e.message); }
+    }else{
+      console.warn('[submit] gasUrl未設定のためGASへ送信できませんでした');
     }
   })();
 }
@@ -2205,33 +2209,43 @@ async function testEmail(){
   const resultEl=document.getElementById('testEmailResult');
   resultEl.classList.remove('d-none');
   resultEl.style.color='#94a3b8'; resultEl.textContent='📨 送信中...';
+  const p=new URLSearchParams({
+    action:'testmail', notifyEmail:email,
+    assocName:S.settings.assocName||'町内会費管理'
+  });
+  const fullUrl=gasUrl+'?'+p;
+
+  // ① CORSモードで試行（PC・Android）
   try{
     const ctrl=new AbortController();
     const tid=setTimeout(()=>ctrl.abort(),15000);
-    const p=new URLSearchParams({
-      action:'testmail',
-      notifyEmail:email,
-      assocName:S.settings.assocName||'町内会費管理'
+    const res=await fetch(fullUrl,{
+      signal:ctrl.signal, credentials:'omit', redirect:'follow'
     });
-    const res=await fetch(gasUrl+'?'+p,{signal:ctrl.signal});
     clearTimeout(tid);
     let json;
     try{ json=await res.json(); }
-    catch(_){ json={success:false,error:'GASの応答がJSON形式ではありません（HTTPステータス: '+res.status+'）'}; }
+    catch(_){ json={success:false,error:'GASの応答がJSON形式ではありません（HTTP '+res.status+'）'}; }
     if(json.success){
       resultEl.style.color='#16a34a';
       resultEl.textContent='✅ テストメールを送信しました。Gmailの受信トレイを確認してください。';
     }else{
       resultEl.style.color='#dc2626';
-      resultEl.textContent='❌ 送信失敗: '+(json.error||'不明なエラー')+'　→ GASを再デプロイしてください';
+      resultEl.textContent='❌ GASエラー: '+(json.error||'不明')+'　→ GASを再デプロイしてください';
     }
+    return;
+  }catch(_){}
+
+  // ② no-corsフォールバック（iOSホーム画面アプリ対応）
+  // iOSのPWAモードはGASのクロスオリジンリダイレクトをブロックするため、
+  // レスポンスを読まずに送信だけ行い、楽観的に成功とみなす
+  try{
+    await fetch(fullUrl,{method:'GET', mode:'no-cors', credentials:'omit'});
+    resultEl.style.color='#16a34a';
+    resultEl.textContent='✅ 送信リクエストを送りました。数秒後にGmailを確認してください。（GASが正しく設定されていれば届きます）';
   }catch(e){
     resultEl.style.color='#dc2626';
-    if(e.name==='AbortError'){
-      resultEl.textContent='❌ タイムアウト（15秒）: GAS URLが正しいか確認してください';
-    }else{
-      resultEl.textContent='❌ 通信エラー: '+e.message;
-    }
+    resultEl.textContent='❌ 送信失敗: '+e.message+'　→ インターネット接続とGAS URLを確認してください';
   }
 }
 
@@ -2279,7 +2293,7 @@ async function syncFromGAS(){
   const btn=document.getElementById('btnSyncGAS');
   btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>同期中...';
   try{
-    const resp=await fetch(gasUrl+'?action=list');
+    const resp=await fetch(gasUrl+'?action=list',{credentials:'omit',redirect:'follow'});
     const data=await resp.json();
     if(!Array.isArray(data))throw new Error('レスポンス形式が不正です');
     let added=0;
@@ -2302,7 +2316,8 @@ async function syncFromGAS(){
 function showGASHelp(){
   document.getElementById('gasSetupHelp').classList.toggle('d-none');
 }
-const GAS_CODE = `// ── 町内会費管理 GAS スクリプト ──────────────────
+const GAS_CODE = `// ── 町内会費管理 GAS スクリプト v3 ──────────────
+// 更新日: 2026-04 / 変更: Gmail通知・電話+メール両対応
 const SHEET_NAME = 'Reports';
 
 function getSheet() {
@@ -2318,43 +2333,51 @@ function getSheet() {
 
 function doGet(e) {
   const action = (e.parameter.action || 'list');
+  Logger.log('action: ' + action + ' / params: ' + JSON.stringify(e.parameter));
   const sheet = getSheet();
 
   if (action === 'submit') {
     const p = e.parameter;
-    sheet.appendRow([p.id, p.name, p.address, p.squadName,
-                     p.phone||'', p.email||'', p.reportedAt, 'false', '']);
-    // ── Gmail通知（GAS経由でメール送信 → どの端末でも確実に届く）──
+    sheet.appendRow([p.id||'', p.name||'', p.address||'', p.squadName||'',
+                     p.phone||'', p.email||'', p.reportedAt||'', 'false', '']);
+    Logger.log('submit: name=' + p.name + ' notifyEmail=' + p.notifyEmail);
+    // ── Gmail通知（GAS経由でメール送信 → どの端末・ブラウザでも確実に届く）──
     if (p.notifyEmail) {
       try {
-        const subject = p.ntfyTitle || '【支払完了報告】' + p.squadName + ' - ' + p.name;
+        const subject = p.ntfyTitle || '【支払完了報告】' + (p.squadName||'') + ' - ' + (p.name||'');
         const body = '支払完了報告が届きました。\\n\\n'
-          + 'お名前: ' + p.name + '\\n'
-          + '住所: ' + p.address + '\\n'
-          + '班: ' + p.squadName + '\\n'
+          + 'お名前: ' + (p.name||'') + '\\n'
+          + '住所: ' + (p.address||'') + '\\n'
+          + '班: ' + (p.squadName||'') + '\\n'
           + '電話番号: ' + (p.phone||'') + '\\n'
           + 'メール: ' + (p.email||'') + '\\n'
-          + '報告日時: ' + p.reportedAt + '\\n\\n'
+          + '報告日時: ' + (p.reportedAt||'') + '\\n\\n'
           + '管理画面で確認・記録してください。';
         MailApp.sendEmail(p.notifyEmail, subject, body);
+        Logger.log('メール送信成功: ' + p.notifyEmail);
       } catch(err) {
-        Logger.log('mail error: ' + err);
+        Logger.log('メール送信失敗: ' + err);
       }
+    } else {
+      Logger.log('notifyEmailが空のためメール送信スキップ');
     }
     return out({success: true});
   }
 
   if (action === 'testmail') {
     const p = e.parameter;
-    if (!p.notifyEmail) return out({success: false, error: 'notifyEmail missing'});
+    Logger.log('testmail: notifyEmail=' + p.notifyEmail);
+    if (!p.notifyEmail) return out({success: false, error: 'notifyEmailが未設定です'});
     try {
       MailApp.sendEmail(
         p.notifyEmail,
         '【テスト】' + (p.assocName || '町内会費管理') + ' 通知設定確認',
-        'このメールが届けば、Gmail通知の設定は正常です。\\n\\n住民が「支払完了」ボタンを押すと、このGmailアドレスに通知が届きます。'
+        'このメールが届けば、Gmail通知の設定は正常です。\\n\\n住民が「支払完了」ボタンを押すと、このGmailアドレスに通知が届きます。\\n\\n送信日時: ' + new Date().toLocaleString('ja-JP')
       );
+      Logger.log('テストメール送信成功: ' + p.notifyEmail);
       return out({success: true});
     } catch(err) {
+      Logger.log('テストメール送信失敗: ' + err);
       return out({success: false, error: String(err)});
     }
   }
@@ -2401,6 +2424,16 @@ function copyGASCode(){
 
 // ── 住民用HTML生成・ダウンロード ──────────────────────────────────
 function exportEmbedded(){
+  // ── エクスポート前チェック：重要設定が空だとメール通知が届かない ──
+  const warn=[];
+  if(!S.settings.gasUrl)      warn.push('・GAS URL（未設定だと支払報告がGASに届きません）');
+  if(!S.settings.notifyEmail) warn.push('・Gmail通知先メール（未設定だとメール通知が届きません）');
+  if(!S.settings.publicUrl)   warn.push('・住民用アクセスURL');
+  if(warn.length){
+    const msg='⚠️ 以下の設定が未入力です。このままエクスポートすると通知が届かない場合があります。\n\n'
+      +warn.join('\n')+'\n\n設定タブで入力してから再エクスポートすることを推奨します。\nそれでもエクスポートしますか？';
+    if(!window.confirm(msg)) return;
+  }
   try{
     // エクスポート前に一時的なUI要素をクリア（outerHTMLに含まれないよう）
     const tw = document.getElementById('toastWrap');
@@ -2578,6 +2611,11 @@ document.addEventListener('DOMContentLoaded',()=>{
 // ── Boot ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
   load(); updatePublicView();
+  // 住民用HTML（EMBEDDED_DATA あり）では管理ボタンを非表示
+  if(EMBEDDED_DATA){
+    const adminBtn=document.getElementById('btnGoAdmin');
+    if(adminBtn) adminBtn.style.display='none';
+  }
   // クエリパラメータ ?view=public または ハッシュ #public があれば住民用画面を強制表示
   const _params=new URLSearchParams(window.location.search);
   const _hash=window.location.hash;
