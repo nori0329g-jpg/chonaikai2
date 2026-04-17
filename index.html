@@ -357,16 +357,12 @@
             <input type="hidden" id="form-squad">
           </div>
           <div class="mb-3">
-            <label class="form-label">連絡先 <span class="text-danger">*</span></label>
-            <div class="contact-type-toggle">
-              <button type="button" class="contact-type-btn selected" id="ctBtnPhone" onclick="selectContactType('phone')">
-                <i class="bi bi-telephone me-1"></i>電話番号
-              </button>
-              <button type="button" class="contact-type-btn" id="ctBtnEmail" onclick="selectContactType('email')">
-                <i class="bi bi-envelope me-1"></i>メール
-              </button>
-            </div>
-            <input type="tel" class="form-control" id="form-contact" placeholder="例: 090-0000-0000">
+            <label class="form-label"><i class="bi bi-telephone me-1 text-primary"></i>電話番号 <span class="text-danger">*</span></label>
+            <input type="tel" class="form-control" id="form-phone" placeholder="例: 090-0000-0000">
+          </div>
+          <div class="mb-3">
+            <label class="form-label"><i class="bi bi-envelope me-1 text-primary"></i>メールアドレス <span class="text-danger">*</span></label>
+            <input type="email" class="form-control" id="form-email-contact" placeholder="例: example@mail.com">
           </div>
 
           <!-- 配布品（ごみ袋など）選択（設定で有効にした場合のみ表示） -->
@@ -639,7 +635,28 @@
         <i class="bi bi-info-circle me-1"></i>
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
-      <div id="reportsContainer"></div>
+      <div id="reportsContainer">
+    <div class="report-card " id="rc-r_1776461784918_xjia4n">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div><span style="font-weight:800;font-size:1rem">ew</span>
+          <span class="ms-2 badge-pending">
+            <i class="bi bi-clock"></i>未確認</span></div>
+        <span style="font-size:.72rem;color:#94a3b8">2026/04/18 06:36</span>
+      </div>
+      <div class="report-info-row"><i class="bi bi-geo-alt"></i><span>tr</span></div>
+      <div class="report-info-row"><i class="bi bi-people"></i><span>第1班</span></div>
+      <div class="report-info-row"><i class="bi bi-telephone"></i><span>090</span></div>
+      <div class="report-info-row"><i class="bi bi-envelope"></i><span>fd</span></div>
+      <div class="report-info-row"><i class="bi bi-currency-yen"></i><span>¥2,400</span></div>
+      <div class="report-info-row"><i class="bi bi-bag"></i><span>ごみ袋: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
+      
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-success btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776461784918_xjia4n')">
+          <i class="bi bi-check me-1"></i>支払い済みに記録</button>
+        <button class="btn btn-outline-secondary btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776461784918_xjia4n')">
+          <i class="bi bi-eye me-1"></i>詳細</button>
+      </div>
+    </div></div>
     </div>
 
     <!-- ── PAYMENTS ───────────────────────────────── -->
@@ -967,7 +984,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge d-none" id="reportBadge">0</span></button>
+      <span class="nav-badge" id="reportBadge">1</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1348,7 +1365,7 @@ let S = {
   reports:[],
   deletedIds:[]   // 削除済み報告IDを記録（同期時に復活させないため）
 };
-let pendingPayId=null, pendingReportId=null, contactType='phone';
+let pendingPayId=null, pendingReportId=null;
 
 // ── Crypto ──────────────────────────────────────────────────────
 async function hashPw(pw){
@@ -1635,7 +1652,8 @@ function renderReports(){
       </div>
       <div class="report-info-row"><i class="bi bi-geo-alt"></i><span>${esc(r.address)}</span></div>
       <div class="report-info-row"><i class="bi bi-people"></i><span>${esc(r.squadName)}</span></div>
-      <div class="report-info-row"><i class="bi bi-${r.contactType==='phone'?'telephone':'envelope'}"></i><span>${esc(r.contact)}</span></div>
+      <div class="report-info-row"><i class="bi bi-telephone"></i><span>${esc(r.phone||r.contact||'')}</span></div>
+      ${r.email?`<div class="report-info-row"><i class="bi bi-envelope"></i><span>${esc(r.email)}</span></div>`:''}
       ${r.feeAmount?`<div class="report-info-row"><i class="bi bi-currency-yen"></i><span>¥${parseInt(r.feeAmount).toLocaleString()}${r.feeType==='reduced'?' <span class="badge bg-warning text-dark" style="font-size:.68rem">'+esc(S.settings.reducedFeeLabel||'割引')+'</span>':''}</span></div>`:''}
       ${S.settings.garbageBagEnabled&&r.needsGarbageBag!==undefined?`<div class="report-info-row"><i class="bi bi-bag"></i><span>${esc(S.settings.garbageBagName||'ごみ袋')}: ${r.needsGarbageBag?'<span class="badge bg-primary" style="font-size:.68rem">必要</span>':'<span class="badge bg-secondary" style="font-size:.68rem">不要</span>'}</span></div>`:''}
       ${r.confirmed&&r.confirmedAt?`<div class="report-info-row" style="color:#16a34a;font-size:.78rem">
@@ -1658,8 +1676,10 @@ function openReportModal(rid){
       <div><div style="font-size:.75rem;color:#64748b">ご住所</div><strong>${esc(r.address)}</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-people-fill text-warning" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">班名</div><strong>${esc(r.squadName)}</strong></div></div>
-    <div class="report-info-row mb-2"><i class="bi bi-${r.contactType==='phone'?'telephone-fill':'envelope-fill'} text-success" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">${r.contactType==='phone'?'電話番号':'メールアドレス'}</div><strong>${esc(r.contact)}</strong></div></div>
+    <div class="report-info-row mb-2"><i class="bi bi-telephone-fill text-success" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">電話番号</div><strong>${esc(r.phone||r.contact||'')}</strong></div></div>
+    ${r.email?`<div class="report-info-row mb-2"><i class="bi bi-envelope-fill text-info" style="font-size:1rem;width:20px"></i>
+      <div><div style="font-size:.75rem;color:#64748b">メールアドレス</div><strong>${esc(r.email)}</strong></div></div>`:''}
     <div class="report-info-row mb-2"><i class="bi bi-clock-fill text-secondary" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">報告日時</div><strong>${esc(r.reportedAt)}</strong></div></div>
     ${r.feeAmount?`<div class="report-info-row mb-2"><i class="bi bi-currency-yen text-warning" style="font-size:1rem;width:20px"></i>
@@ -1964,19 +1984,13 @@ function selectGarbageBag(needs){
   document.getElementById('gbNoBtn').classList.toggle('selected', !needs);
   document.getElementById('form-garbageBag').value=needs?'true':'false';
 }
-function selectContactType(type){
-  contactType=type;
-  document.getElementById('ctBtnPhone').classList.toggle('selected',type==='phone');
-  document.getElementById('ctBtnEmail').classList.toggle('selected',type==='email');
-  const inp=document.getElementById('form-contact');
-  inp.type=type==='phone'?'tel':'email';
-  inp.placeholder=type==='phone'?'例: 090-0000-0000':'例: example@mail.com';
-}
+
 function submitPaymentReport(){
   const name=document.getElementById('form-name').value.trim();
   const address=document.getElementById('form-address').value.trim();
   const squad=document.getElementById('form-squad').value;
-  const contact=document.getElementById('form-contact').value.trim();
+  const phone=document.getElementById('form-phone').value.trim();
+  const emailContact=document.getElementById('form-email-contact').value.trim();
   if(!name)   return shakeField('form-name','お名前を入力してください');
   if(!address)return shakeField('form-address','ご住所を入力してください');
   if(!squad){
@@ -1984,7 +1998,8 @@ function submitPaymentReport(){
       ?'form-squad-text':'form-squad-select';
     return shakeField(visEl,'班名を選択してください');
   }
-  if(!contact)return shakeField('form-contact','連絡先を入力してください');
+  if(!phone)return shakeField('form-phone','電話番号を入力してください');
+  if(!emailContact)return shakeField('form-email-contact','メールアドレスを入力してください');
 
   const feeType=document.getElementById('form-feeType').value||'normal';
   const needsGarbageBag=document.getElementById('form-garbageBag').value!=='false';
@@ -1993,7 +2008,7 @@ function submitPaymentReport(){
     :parseInt(S.settings.amount||0);
   const report={
     id:'r_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-    name,address,squadName:squad,contactType,contact,
+    name,address,squadName:squad,phone,email:emailContact,
     feeType, feeAmount, needsGarbageBag,
     reportedAt:nowStr(),confirmed:false,confirmedAt:null
   };
@@ -2006,7 +2021,8 @@ function submitPaymentReport(){
       <tr><td style="width:90px;color:#64748b;padding:4px 0">お名前</td><td><strong>${esc(name)}</strong></td></tr>
       <tr><td style="color:#64748b;padding:4px 0">住所</td><td><strong>${esc(address)}</strong></td></tr>
       <tr><td style="color:#64748b;padding:4px 0">班名</td><td><strong>${esc(squad)}</strong></td></tr>
-      <tr><td style="color:#64748b;padding:4px 0">連絡先</td><td><strong>${esc(contact)}</strong></td></tr>
+      <tr><td style="color:#64748b;padding:4px 0">電話番号</td><td><strong>${esc(phone)}</strong></td></tr>
+      <tr><td style="color:#64748b;padding:4px 0">メール</td><td><strong>${esc(emailContact)}</strong></td></tr>
     </table>`;
   document.getElementById('pubStep2').classList.remove('d-none');
 
@@ -2018,7 +2034,7 @@ function submitPaymentReport(){
         const tid=setTimeout(()=>ctrl.abort(),8000);
         const p=new URLSearchParams({
           action:'submit', id:report.id, name, address,
-          squadName:squad, contactType, contact, reportedAt:report.reportedAt,
+          squadName:squad, phone, email:emailContact, reportedAt:report.reportedAt,
           notifyEmail: S.settings.notifyEmail||'',
           ntfyTitle: `[${S.settings.assocName}] 支払完了報告`
         });
@@ -2033,14 +2049,13 @@ function shakeField(id,msg){
   toast(msg,'warning'); setTimeout(()=>{el.style.borderColor='';},2000);
 }
 function resetPublicForm(){
-  ['form-name','form-address','form-contact','form-squad'].forEach(id=>document.getElementById(id).value='');
+  ['form-name','form-address','form-phone','form-email-contact','form-squad'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('form-squad-select').value='';
   document.getElementById('form-squad-text').value='';
   const btn=document.getElementById('btnSubmitPayment');
   btn.disabled=false; btn.innerHTML='<i class="bi bi-check-circle-fill" style="font-size:1.2rem"></i>支払完了';
   document.getElementById('pubStep1').classList.remove('d-none');
   document.getElementById('pubStep2').classList.add('d-none');
-  selectContactType('phone');
   selectFeeType('normal');
   selectGarbageBag(true);
   // 金額表示を通常料金に戻す
@@ -2184,14 +2199,15 @@ function printFlyer(){
 async function testEmail(){
   const email=document.getElementById('set-notifyEmail').value.trim();
   if(!email)return toast('通知先メールアドレスを入力してください','warning');
-  const gasUrl=(S.settings.gasUrl||'').trim();
-  if(!gasUrl)return toast('GAS URLが設定されていません','warning');
+  // GAS URLは入力欄から直接取得（未保存でも動作する）
+  const gasUrl=(document.getElementById('set-gasUrl').value||S.settings.gasUrl||'').trim();
+  if(!gasUrl)return toast('GAS URLを入力してください','warning');
   const resultEl=document.getElementById('testEmailResult');
   resultEl.classList.remove('d-none');
-  resultEl.style.color='#94a3b8'; resultEl.textContent='送信中...';
+  resultEl.style.color='#94a3b8'; resultEl.textContent='📨 送信中...';
   try{
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),10000);
+    const tid=setTimeout(()=>ctrl.abort(),15000);
     const p=new URLSearchParams({
       action:'testmail',
       notifyEmail:email,
@@ -2199,17 +2215,23 @@ async function testEmail(){
     });
     const res=await fetch(gasUrl+'?'+p,{signal:ctrl.signal});
     clearTimeout(tid);
-    const json=await res.json();
+    let json;
+    try{ json=await res.json(); }
+    catch(_){ json={success:false,error:'GASの応答がJSON形式ではありません（HTTPステータス: '+res.status+'）'}; }
     if(json.success){
       resultEl.style.color='#16a34a';
-      resultEl.textContent='✅ テストメールを送信しました。Gmailを確認してください。';
+      resultEl.textContent='✅ テストメールを送信しました。Gmailの受信トレイを確認してください。';
     }else{
       resultEl.style.color='#dc2626';
-      resultEl.textContent='❌ 送信失敗: '+(json.error||'不明なエラー');
+      resultEl.textContent='❌ 送信失敗: '+(json.error||'不明なエラー')+'　→ GASを再デプロイしてください';
     }
   }catch(e){
     resultEl.style.color='#dc2626';
-    resultEl.textContent='❌ エラー: '+(e.name==='AbortError'?'タイムアウト（10秒）':e.message);
+    if(e.name==='AbortError'){
+      resultEl.textContent='❌ タイムアウト（15秒）: GAS URLが正しいか確認してください';
+    }else{
+      resultEl.textContent='❌ 通信エラー: '+e.message;
+    }
   }
 }
 
@@ -2288,7 +2310,7 @@ function getSheet() {
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(['id','name','address','squadName','contactType','contact','reportedAt','confirmed','confirmedAt']);
+    sheet.appendRow(['id','name','address','squadName','phone','email','reportedAt','confirmed','confirmedAt']);
     sheet.setFrozenRows(1);
   }
   return sheet;
@@ -2301,7 +2323,7 @@ function doGet(e) {
   if (action === 'submit') {
     const p = e.parameter;
     sheet.appendRow([p.id, p.name, p.address, p.squadName,
-                     p.contactType, p.contact, p.reportedAt, 'false', '']);
+                     p.phone||'', p.email||'', p.reportedAt, 'false', '']);
     // ── Gmail通知（GAS経由でメール送信 → どの端末でも確実に届く）──
     if (p.notifyEmail) {
       try {
@@ -2310,7 +2332,8 @@ function doGet(e) {
           + 'お名前: ' + p.name + '\\n'
           + '住所: ' + p.address + '\\n'
           + '班: ' + p.squadName + '\\n'
-          + '連絡先: ' + p.contact + '\\n'
+          + '電話番号: ' + (p.phone||'') + '\\n'
+          + 'メール: ' + (p.email||'') + '\\n'
           + '報告日時: ' + p.reportedAt + '\\n\\n'
           + '管理画面で確認・記録してください。';
         MailApp.sendEmail(p.notifyEmail, subject, body);
@@ -2353,7 +2376,7 @@ function doGet(e) {
   if (rows.length <= 1) return out([]);
   const reports = rows.slice(1).map(r => ({
     id:r[0], name:r[1], address:r[2], squadName:r[3],
-    contactType:r[4], contact:r[5], reportedAt:r[6],
+    phone:r[4], email:r[5], reportedAt:r[6],
     confirmed: r[7]==='true', confirmedAt: r[8]||null
   }));
   return out(reports);
