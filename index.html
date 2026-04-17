@@ -268,7 +268,9 @@
       </div>
       <div id="firstSetupAlert" class="alert alert-warning mt-3 d-none" style="font-size:.82rem">
         <i class="bi bi-info-circle me-1"></i>
-        初回ログイン: パスワード <strong>admin</strong> でログインし、設定画面でパスワードを変更してください。
+        <strong>初回・別端末でのログイン</strong><br>
+        パスワード <strong>admin</strong> でログインできます。<br>
+        別端末の場合は「設定 → バックアップ」から復元してください。
       </div>
     </div>
   </div>
@@ -800,6 +802,9 @@
             <button class="btn btn-success btn-sm mt-2" onclick="exportEmbedded()">
               <i class="bi bi-download me-1"></i>住民用HTMLをダウンロード
             </button>
+            <button class="btn btn-outline-primary btn-sm mt-2" onclick="exportAdmin()">
+              <i class="bi bi-phone me-1"></i>管理者用HTML（スマホ用）をエクスポート
+            </button>
           </div>
         </div>
       </div>
@@ -859,7 +864,7 @@
             <input type="url" class="form-control" id="set-gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
             <div class="form-text">設定後は「住民用HTMLをダウンロード」でファイルを再生成してアップロードしてください</div>
           </div>
-          <div id="gasSetupHelp" class="mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
+          <div id="gasSetupHelp" class="d-none mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
             <strong>🔧 GAS設定手順</strong><br>
             ① <a href="https://sheets.google.com" target="_blank">Google スプレッドシート</a>で新しいシートを作成<br>
             ② メニュー「拡張機能」→「Apps Script」をクリック<br>
@@ -890,7 +895,7 @@
           <button class="btn btn-outline-primary btn-sm" id="btnTestNotify">
             <i class="bi bi-send me-1"></i>テストメールを送信
           </button>
-          <div id="testEmailResult" class="d-none mt-2" style="font-size:.82rem"></div>
+          <div id="testEmailResult" class="mt-2" style="font-size: 0.82rem; color: rgb(22, 163, 74);">✅ テストメールを送信しました。Gmailの受信トレイを確認してください。</div>
         </div>
       </div>
 
@@ -2199,6 +2204,27 @@ function printFlyer(){
   setTimeout(()=>w.print(),800);
 }
 
+// ── GAS JSONP ヘルパー（iOSのPWAモードでも応答が読める） ──────────
+// <script>タグはCORSを受けないため、GASのクロスオリジンリダイレクトでも動作する
+function gasJsonp(url, timeoutMs){
+  return new Promise((resolve, reject)=>{
+    const cbName='_gasCb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    const script=document.createElement('script');
+    const timer=setTimeout(()=>{
+      cleanup(); reject(new Error('timeout'));
+    }, timeoutMs||15000);
+    window[cbName]=(data)=>{ cleanup(); resolve(data); };
+    function cleanup(){
+      clearTimeout(timer); delete window[cbName];
+      if(script.parentNode) script.parentNode.removeChild(script);
+    }
+    script.onerror=()=>{ cleanup(); reject(new Error('script load failed')); };
+    // cbパラメータをURLに追加
+    script.src=url+(url.includes('?')?'&':'?')+'cb='+cbName;
+    document.head.appendChild(script);
+  });
+}
+
 // ── テストメール送信（設定タブの「テストメールを送信」ボタン） ──────
 async function testEmail(){
   const email=document.getElementById('set-notifyEmail').value.trim();
@@ -2215,37 +2241,41 @@ async function testEmail(){
   });
   const fullUrl=gasUrl+'?'+p;
 
-  // ① CORSモードで試行（PC・Android）
+  const showResult=(ok, msg)=>{
+    resultEl.style.color=ok?'#16a34a':'#dc2626';
+    resultEl.textContent=msg;
+  };
+
+  // ① CORSで試行（PC・Android Chrome）
   try{
     const ctrl=new AbortController();
-    const tid=setTimeout(()=>ctrl.abort(),15000);
-    const res=await fetch(fullUrl,{
-      signal:ctrl.signal, credentials:'omit', redirect:'follow'
-    });
+    const tid=setTimeout(()=>ctrl.abort(),12000);
+    const res=await fetch(fullUrl,{signal:ctrl.signal,credentials:'omit',redirect:'follow'});
     clearTimeout(tid);
     let json;
-    try{ json=await res.json(); }
-    catch(_){ json={success:false,error:'GASの応答がJSON形式ではありません（HTTP '+res.status+'）'}; }
-    if(json.success){
-      resultEl.style.color='#16a34a';
-      resultEl.textContent='✅ テストメールを送信しました。Gmailの受信トレイを確認してください。';
+    try{ json=await res.json(); }catch(_){ json=null; }
+    if(json && json.success){
+      showResult(true,'✅ テストメールを送信しました。Gmailの受信トレイを確認してください。');
+    }else if(json){
+      showResult(false,'❌ GASエラー: '+(json.error||'不明')+'　→ GASを再デプロイしてください');
     }else{
-      resultEl.style.color='#dc2626';
-      resultEl.textContent='❌ GASエラー: '+(json.error||'不明')+'　→ GASを再デプロイしてください';
+      showResult(false,'❌ GASの応答が不正です（HTTP '+res.status+'）→ GASを再デプロイしてください');
     }
     return;
   }catch(_){}
 
-  // ② no-corsフォールバック（iOSホーム画面アプリ対応）
-  // iOSのPWAモードはGASのクロスオリジンリダイレクトをブロックするため、
-  // レスポンスを読まずに送信だけ行い、楽観的に成功とみなす
+  // ② JSONPで試行（iOSのPWAモード・CORS失敗時）
+  // <script>タグはCORSを受けないためGASのリダイレクトを問題なく通過できる
+  resultEl.textContent='📨 送信中... (iOS対応モード)';
   try{
-    await fetch(fullUrl,{method:'GET', mode:'no-cors', credentials:'omit'});
-    resultEl.style.color='#16a34a';
-    resultEl.textContent='✅ 送信リクエストを送りました。数秒後にGmailを確認してください。（GASが正しく設定されていれば届きます）';
+    const json=await gasJsonp(fullUrl, 15000);
+    if(json && json.success){
+      showResult(true,'✅ テストメールを送信しました。Gmailの受信トレイを確認してください。');
+    }else{
+      showResult(false,'❌ GASエラー: '+((json&&json.error)||'不明')+'　→ GASを再デプロイしてください');
+    }
   }catch(e){
-    resultEl.style.color='#dc2626';
-    resultEl.textContent='❌ 送信失敗: '+e.message+'　→ インターネット接続とGAS URLを確認してください';
+    showResult(false,'❌ GASに接続できません: '+e.message+'　→ GAS URLとインターネット接続を確認してください');
   }
 }
 
@@ -2292,26 +2322,34 @@ async function syncFromGAS(){
   }
   const btn=document.getElementById('btnSyncGAS');
   btn.disabled=true; btn.innerHTML='<span class="spinner-border spinner-border-sm me-1"></span>同期中...';
-  try{
-    const resp=await fetch(gasUrl+'?action=list',{credentials:'omit',redirect:'follow'});
-    const data=await resp.json();
+  const applySync=(data)=>{
     if(!Array.isArray(data))throw new Error('レスポンス形式が不正です');
     let added=0;
     data.forEach(r=>{
       if(!r.id)return;
-      if(S.deletedIds.includes(r.id))return; // 削除済みはスキップ
+      if(S.deletedIds.includes(r.id))return;
       const existing=S.reports.find(lr=>lr.id===r.id);
       if(!existing){ S.reports.push(r); added++; }
       else if(r.confirmed&&!existing.confirmed){ existing.confirmed=true; existing.confirmedAt=r.confirmedAt; }
     });
     save(); renderReports(); updateReportBadge(); renderDashboard();
     toast(`同期完了：${data.length}件（新規${added}件）`,'success');
-  }catch(e){
-    console.error('GAS sync error',e);
-    toast('同期に失敗しました。GAS URLを確認してください。','danger');
-  }finally{
-    btn.disabled=false; btn.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>報告を同期';
+  };
+  const listUrl=gasUrl+'?action=list';
+  try{
+    // ① CORS fetch
+    const resp=await fetch(listUrl,{credentials:'omit',redirect:'follow'});
+    applySync(await resp.json());
+  }catch(_){
+    // ② JSONPフォールバック（iOSのPWAモード対応）
+    try{
+      applySync(await gasJsonp(listUrl,15000));
+    }catch(e){
+      console.error('GAS sync error',e);
+      toast('同期に失敗しました: '+e.message,'danger');
+    }
   }
+  btn.disabled=false; btn.innerHTML='<i class="bi bi-arrow-repeat me-1"></i>報告を同期';
 }
 function showGASHelp(){
   document.getElementById('gasSetupHelp').classList.toggle('d-none');
@@ -2333,7 +2371,8 @@ function getSheet() {
 
 function doGet(e) {
   const action = (e.parameter.action || 'list');
-  Logger.log('action: ' + action + ' / params: ' + JSON.stringify(e.parameter));
+  const cb = e.parameter.cb || null; // JSONP コールバック名（iOSのPWAモード対応）
+  Logger.log('action: ' + action + ' / cb: ' + cb);
   const sheet = getSheet();
 
   if (action === 'submit') {
@@ -2341,7 +2380,6 @@ function doGet(e) {
     sheet.appendRow([p.id||'', p.name||'', p.address||'', p.squadName||'',
                      p.phone||'', p.email||'', p.reportedAt||'', 'false', '']);
     Logger.log('submit: name=' + p.name + ' notifyEmail=' + p.notifyEmail);
-    // ── Gmail通知（GAS経由でメール送信 → どの端末・ブラウザでも確実に届く）──
     if (p.notifyEmail) {
       try {
         const subject = p.ntfyTitle || '【支払完了報告】' + (p.squadName||'') + ' - ' + (p.name||'');
@@ -2361,13 +2399,13 @@ function doGet(e) {
     } else {
       Logger.log('notifyEmailが空のためメール送信スキップ');
     }
-    return out({success: true});
+    return out({success: true}, cb);
   }
 
   if (action === 'testmail') {
     const p = e.parameter;
     Logger.log('testmail: notifyEmail=' + p.notifyEmail);
-    if (!p.notifyEmail) return out({success: false, error: 'notifyEmailが未設定です'});
+    if (!p.notifyEmail) return out({success: false, error: 'notifyEmailが未設定です'}, cb);
     try {
       MailApp.sendEmail(
         p.notifyEmail,
@@ -2375,10 +2413,10 @@ function doGet(e) {
         'このメールが届けば、Gmail通知の設定は正常です。\\n\\n住民が「支払完了」ボタンを押すと、このGmailアドレスに通知が届きます。\\n\\n送信日時: ' + new Date().toLocaleString('ja-JP')
       );
       Logger.log('テストメール送信成功: ' + p.notifyEmail);
-      return out({success: true});
+      return out({success: true}, cb);
     } catch(err) {
       Logger.log('テストメール送信失敗: ' + err);
-      return out({success: false, error: String(err)});
+      return out({success: false, error: String(err)}, cb);
     }
   }
 
@@ -2391,23 +2429,30 @@ function doGet(e) {
         break;
       }
     }
-    return out({success: true});
+    return out({success: true}, cb);
   }
 
   // action === 'list'
   const rows = sheet.getDataRange().getValues();
-  if (rows.length <= 1) return out([]);
+  if (rows.length <= 1) return out([], cb);
   const reports = rows.slice(1).map(r => ({
     id:r[0], name:r[1], address:r[2], squadName:r[3],
     phone:r[4], email:r[5], reportedAt:r[6],
     confirmed: r[7]==='true', confirmedAt: r[8]||null
   }));
-  return out(reports);
+  return out(reports, cb);
 }
 
-function out(data) {
+function out(data, cb) {
+  const json = JSON.stringify(data);
+  if (cb && /^\w+$/.test(cb)) {
+    // JSONP: <script>タグ経由のリクエストに対応（iOSのPWAモードでもCORSなしで応答が読める）
+    return ContentService
+      .createTextOutput(cb + '(' + json + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
   return ContentService
-    .createTextOutput(JSON.stringify(data))
+    .createTextOutput(json)
     .setMimeType(ContentService.MimeType.JSON);
 }`;
 function copyGASCode(){
@@ -2478,6 +2523,49 @@ function exportEmbedded(){
   }catch(e){
     console.error('export error', e);
     toast('エクスポートに失敗しました: ' + e.message,'danger');
+  }
+}
+
+function exportAdmin(){
+  // 管理者用エクスポート：pwHashを含む全設定を埋め込む（モバイル管理者用）
+  // ※ このHTMLには管理者パスワードのハッシュが含まれます。
+  //    住民に配布せず、管理者専用URLとして別途ホストしてください。
+  if(!window.confirm(
+    '管理者用HTMLには【パスワードハッシュ】が含まれます。\n\n' +
+    '住民には配布せず、管理者専用のURLとして\n' +
+    'GitHub Pages等に「admin.html」等の名前でアップロードしてください。\n\n' +
+    '続けますか？'
+  )) return;
+  try{
+    const tw=document.getElementById('toastWrap');
+    const twBak=tw.innerHTML; tw.innerHTML='';
+    const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    tw.innerHTML=twBak;
+    // 管理者用：pwHash を含む全設定を埋め込む
+    const embedData={settings:S.settings, squads:S.squads};
+    const jsonStr=JSON.stringify(embedData);
+    const markerRe=/const EMBEDDED_DATA = [^\n]*\/\/ <<EXPORT_DATA>>/;
+    if(!markerRe.test(html)){
+      toast('マーカーが見つかりません。再読み込みしてください。','danger'); return;
+    }
+    const replacement=`const EMBEDDED_DATA = ${jsonStr}; // <<EXPORT_DATA>>`;
+    const modified=html.replace(markerRe,()=>replacement);
+    const blob=new Blob([modified],{type:'text/html;charset=utf-8'});
+    const fname=(S.settings.assocName||'町内会')+'_'+(S.settings.year||'')+'年度_管理者用.html';
+    try{
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=fname;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    }catch(dlErr){
+      const url=URL.createObjectURL(blob);
+      window.open(url,'_blank');
+      setTimeout(()=>URL.revokeObjectURL(url),10000);
+    }
+    toast('管理者用HTMLをダウンロードしました ✅ admin.html等の名前でホストしてください。','success');
+  }catch(e){
+    toast('エクスポートに失敗しました: '+e.message,'danger');
   }
 }
 
@@ -2613,8 +2701,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   load(); updatePublicView();
   // 住民用HTML（EMBEDDED_DATA あり）では管理ボタンを非表示
   if(EMBEDDED_DATA){
-    const adminBtn=document.getElementById('btnGoAdmin');
-    if(adminBtn) adminBtn.style.display='none';
+    // pwHashが含まれていれば管理者用エクスポート → 管理ボタンは維持
+    if(!EMBEDDED_DATA.settings || !EMBEDDED_DATA.settings.pwHash){
+      // 住民用HTML: 管理画面へのボタンを全て非表示
+      ['btnGoAdmin','btnBackToLogin','firstSetupAlert'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el) el.style.display='none';
+      });
+    }
   }
   // クエリパラメータ ?view=public または ハッシュ #public があれば住民用画面を強制表示
   const _params=new URLSearchParams(window.location.search);
