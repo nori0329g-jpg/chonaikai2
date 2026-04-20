@@ -311,7 +311,7 @@
             お支払い金額を選択してください <span class="text-danger">*</span>
           </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-            <button type="button" class="contact-type-btn selected" id="feeNormalBtn" onclick="selectFeeType('normal')" style="padding:.65rem .5rem">
+            <button type="button" class="contact-type-btn" id="feeNormalBtn" onclick="selectFeeType('normal')" style="padding:.65rem .5rem">
               <div style="font-size:.82rem;color:#475569;margin-bottom:2px" id="feeNormalLabel">通常世帯</div>
               <div style="font-size:1.15rem;font-weight:800" id="feeNormalAmt">¥2,400</div>
             </button>
@@ -321,7 +321,7 @@
               <div style="font-size:1.15rem;font-weight:800" id="feeReducedAmt">¥1,200</div>
             </button>
           </div>
-          <input type="hidden" id="form-feeType" value="normal">
+          <input type="hidden" id="form-feeType" value="">
         </div>
 
         <!-- 非表示QR画像（モーダル用） -->
@@ -1750,7 +1750,9 @@ function confirmReport(){
       garbageBagEnabled:String(!!S.settings.garbageBagEnabled),
       garbageBagName:   S.settings.garbageBagName||'ごみ袋',
       needsGarbageBag:  String(r.needsGarbageBag!==false),
-      needsReceipt:     String(!!r.needsReceipt)
+      needsReceipt:     String(!!r.needsReceipt),
+      feeAmount:        String(r.feeAmount||0),
+      feeType:          r.feeType||'normal'
     });
     fetch(S.settings.gasUrl+'?'+p,{mode:'no-cors',credentials:'omit'})
       .catch(()=>fetch(S.settings.gasUrl+'?'+p,{credentials:'omit',redirect:'follow'})
@@ -2601,33 +2603,45 @@ function doGet(e) {
     const residentEmail = (p.residentEmail || '').trim();
     if (residentEmail) {
       try {
-        const assocName   = p.assocName || '町内会費管理';
+        const assocName    = p.assocName || '町内会費管理';
         const residentName = p.residentName || '';
-        const gbEnabled   = p.garbageBagEnabled === 'true';
-        const gbNeeds     = p.needsGarbageBag === 'true';
-        const gbName      = p.garbageBagName || 'ごみ袋';
+        const gbEnabled    = p.garbageBagEnabled === 'true';
+        const gbNeeds      = p.needsGarbageBag === 'true';
+        const gbName       = p.garbageBagName || 'ごみ袋';
         const receiptNeeds = p.needsReceipt === 'true';
+        const feeAmount    = Number(p.feeAmount) || 0;
 
-        // ポスト投函アイテムを列挙
+        // ポスト投函アイテムを列挙（領収書はPDFで添付するため除外）
         const deliveryItems = [];
-        if (gbEnabled && gbNeeds)  deliveryItems.push(gbName);
-        if (receiptNeeds)          deliveryItems.push('領収書');
+        if (gbEnabled && gbNeeds) deliveryItems.push(gbName);
         deliveryItems.push('不燃物の会員証（今年度より新規発行）');
 
-        const deliveryLine = deliveryItems.length > 0
-          ? '\\n\\n以下のものは後日ポストに投函いたします。\\n'
-            + deliveryItems.map(item => '  ・' + item).join('\\n')
+        const deliveryLine = '\\n\\n以下のものは後日ポストに投函いたします。\\n'
+          + deliveryItems.map(function(item){ return '  ・' + item; }).join('\\n');
+
+        // 領収書PDF添付の案内文
+        const receiptLine = receiptNeeds
+          ? '\\n\\n領収書をPDFにて本メールに添付しております。ご確認ください。'
           : '';
 
         const subject = '【' + assocName + '】町内会費のお支払い確認について';
         const body = residentName + ' 様\\n\\n'
           + 'このたびは町内会費のお支払いをいただき、誠にありがとうございました。\\n'
           + 'ご報告の内容を確認し、記録いたしました。'
+          + receiptLine
           + deliveryLine
           + '\\n\\n今後ともどうぞよろしくお願いいたします。\\n\\n'
           + assocName;
-        MailApp.sendEmail(residentEmail, subject, body);
-        Logger.log('お礼メール送信成功: ' + residentEmail);
+
+        // メール送信オプション（領収書PDF添付）
+        const mailOptions = {};
+        if (receiptNeeds) {
+          const pdfBlob = createReceiptPdf(residentName, feeAmount);
+          if (pdfBlob) mailOptions.attachments = [pdfBlob];
+        }
+
+        MailApp.sendEmail(residentEmail, subject, body, mailOptions);
+        Logger.log('お礼メール送信成功: ' + residentEmail + ' / 領収書添付: ' + receiptNeeds);
       } catch(err) {
         Logger.log('お礼メール送信失敗: ' + err);
       }
@@ -2650,6 +2664,102 @@ function doGet(e) {
     needsReceipt:   r[12] === '必要'
   }));
   return out(reports, cb);
+}
+
+// ── 領収書PDF生成 ──────────────────────────────────
+function createReceiptPdf(name, amount) {
+  try {
+    const dateStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy年MM月dd日');
+    const amtNum  = Number(amount) || 0;
+    const amtStr  = amtNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+    const doc  = DocumentApp.create('__receipt_temp_' + Date.now() + '__');
+    const body = doc.getBody();
+    body.clear();
+
+    var C = DocumentApp.HorizontalAlignment.CENTER;
+    var R = DocumentApp.HorizontalAlignment.RIGHT;
+    var L = DocumentApp.HorizontalAlignment.LEFT;
+
+    // ── ヘッダー余白
+    body.appendParagraph('');
+
+    // ── タイトル
+    var tp = body.appendParagraph('領　収　書');
+    tp.setAlignment(C);
+    tp.editAsText().setFontSize(26).setBold(true);
+
+    body.appendParagraph('');
+
+    // ── 発行日（右寄せ）
+    var dp = body.appendParagraph(dateStr);
+    dp.setAlignment(R);
+    dp.editAsText().setFontSize(11);
+
+    body.appendParagraph('');
+    body.appendParagraph('');
+
+    // ── 宛名
+    var np = body.appendParagraph(name + '　様');
+    np.setAlignment(L);
+    np.editAsText().setFontSize(15).setBold(true);
+
+    // ── 区切り線
+    var lp = body.appendParagraph('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lp.setAlignment(L);
+    lp.editAsText().setFontSize(10);
+
+    body.appendParagraph('');
+
+    // ── 金額
+    var ap = body.appendParagraph('　金　額　　¥ ' + amtStr + ' -');
+    ap.setAlignment(L);
+    ap.editAsText().setFontSize(22).setBold(true);
+
+    body.appendParagraph('');
+
+    // ── 但し書き
+    var bp = body.appendParagraph('但し　2026年度 町内会費として');
+    bp.setAlignment(L);
+    bp.editAsText().setFontSize(12);
+
+    body.appendParagraph('');
+
+    // ── 受領文
+    var sp = body.appendParagraph('上記の金額を正しく受領いたしました。');
+    sp.setAlignment(L);
+    sp.editAsText().setFontSize(12);
+
+    body.appendParagraph('');
+    body.appendParagraph('');
+    body.appendParagraph('');
+    body.appendParagraph('');
+
+    // ── 発行元（右寄せ）
+    var i1 = body.appendParagraph('鴨部宮寺町内会');
+    i1.setAlignment(R);
+    i1.editAsText().setFontSize(12);
+
+    var i2 = body.appendParagraph('会長　鎌田　倫嗣');
+    i2.setAlignment(R);
+    i2.editAsText().setFontSize(12);
+
+    body.appendParagraph('');
+
+    doc.saveAndClose();
+
+    var pdf = doc.getAs('application/pdf');
+    pdf.setName('領収書_' + name + '.pdf');
+
+    // 一時ドキュメントを削除
+    DriveApp.getFileById(doc.getId()).setTrashed(true);
+
+    Logger.log('領収書PDF生成成功: ' + name + ' ¥' + amtStr);
+    return pdf;
+  } catch(err) {
+    Logger.log('領収書PDF生成失敗: ' + err);
+    return null;
+  }
 }
 
 function out(data, cb) {
