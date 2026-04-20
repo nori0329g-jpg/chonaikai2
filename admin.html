@@ -409,11 +409,11 @@
               <i class="bi bi-receipt me-1 text-primary"></i>領収書は必要ですか？
             </label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">
-              <button type="button" class="contact-type-btn selected" id="receiptNoBtn" onclick="selectReceipt(false)">
-                <i class="bi bi-x-circle me-1"></i>不要
-              </button>
               <button type="button" class="contact-type-btn" id="receiptYesBtn" onclick="selectReceipt(true)">
                 <i class="bi bi-check-circle me-1"></i>必要
+              </button>
+              <button type="button" class="contact-type-btn selected" id="receiptNoBtn" onclick="selectReceipt(false)">
+                <i class="bi bi-x-circle me-1"></i>不要
               </button>
             </div>
             <input type="hidden" id="form-receipt" value="false">
@@ -900,7 +900,7 @@
             <input type="url" class="form-control" id="set-gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
             <div class="form-text">設定後は「住民用HTMLをダウンロード」でファイルを再生成してアップロードしてください</div>
           </div>
-          <div id="gasSetupHelp" class="mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
+          <div id="gasSetupHelp" class="d-none mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
             <strong>🔧 GAS設定手順</strong><br>
             ① <a href="https://sheets.google.com" target="_blank">Google スプレッドシート</a>で新しいシートを作成<br>
             ② メニュー「拡張機能」→「Apps Script」をクリック<br>
@@ -2484,8 +2484,8 @@ async function syncFromGAS(){
 function showGASHelp(){
   document.getElementById('gasSetupHelp').classList.toggle('d-none');
 }
-const GAS_CODE = `// ── 町内会費管理 GAS スクリプト v6 ──────────────
-// 更新日: 2026-04 / 変更: 領収書列追加・confirm時にお礼メール送信
+const GAS_CODE = `// ── 町内会費管理 GAS スクリプト v7 ──────────────
+// 更新日: 2026-04 / 変更: 領収書PDF添付（SpreadsheetApp+UrlFetchApp方式）
 const SHEET_NAME = 'Reports';
 
 function getSheet() {
@@ -2666,99 +2666,131 @@ function doGet(e) {
   return out(reports, cb);
 }
 
-// ── 領収書PDF生成 ──────────────────────────────────
+// ── 領収書PDF生成（SpreadsheetApp + UrlFetchApp 方式） ──
+// 初回デプロイ後、GASエディタから testPdfGeneration() を一度実行して権限を付与してください
 function createReceiptPdf(name, amount) {
   try {
-    const dateStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy年MM月dd日');
-    const amtNum  = Number(amount) || 0;
-    const amtStr  = amtNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    var dateStr = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy年MM月dd日');
+    var amtNum  = Number(amount) || 0;
+    var amtStr  = amtNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-    const doc  = DocumentApp.create('__receipt_temp_' + Date.now() + '__');
-    const body = doc.getBody();
-    body.clear();
+    // ── 一時スプレッドシートを作成して領収書レイアウトを組む
+    var ss    = SpreadsheetApp.create('__receipt_temp_' + Date.now() + '__');
+    var sheet = ss.getSheets()[0];
+    sheet.setHiddenGridlines(true);
 
-    var C = DocumentApp.HorizontalAlignment.CENTER;
-    var R = DocumentApp.HorizontalAlignment.RIGHT;
-    var L = DocumentApp.HorizontalAlignment.LEFT;
+    // 列幅・行高
+    sheet.setColumnWidth(1, 50);   // A: 左余白
+    sheet.setColumnWidth(2, 340);  // B: メインコンテンツ
+    sheet.setColumnWidth(3, 170);  // C: 右側
+    sheet.setColumnWidth(4, 40);   // D: 右余白
+    sheet.setRowHeight(1, 20);
+    sheet.setRowHeight(2, 70);  // タイトル行
+    sheet.setRowHeight(3, 30);  // 日付行
+    sheet.setRowHeight(4, 20);
+    sheet.setRowHeight(5, 55);  // 宛名行
+    sheet.setRowHeight(6, 8);   // 区切り
+    sheet.setRowHeight(7, 65);  // 金額行
+    sheet.setRowHeight(8, 20);
+    sheet.setRowHeight(9, 35);  // 但し書き
+    sheet.setRowHeight(10, 10);
+    sheet.setRowHeight(11, 35); // 受領文
+    sheet.setRowHeight(12, 30);
+    sheet.setRowHeight(13, 30);
+    sheet.setRowHeight(14, 30);
+    sheet.setRowHeight(15, 30);
+    sheet.setRowHeight(16, 30);
 
-    // ── ヘッダー余白
-    body.appendParagraph('');
+    // タイトル
+    sheet.getRange('B2')
+      .setValue('領　収　書')
+      .setFontSize(22).setFontWeight('bold')
+      .setHorizontalAlignment('center').setVerticalAlignment('middle');
 
-    // ── タイトル
-    var tp = body.appendParagraph('領　収　書');
-    tp.setAlignment(C);
-    tp.editAsText().setFontSize(26).setBold(true);
+    // 発行日（右寄せ）
+    sheet.getRange('C3')
+      .setValue(dateStr)
+      .setFontSize(10).setHorizontalAlignment('right').setVerticalAlignment('middle');
 
-    body.appendParagraph('');
+    // 宛名
+    sheet.getRange('B5')
+      .setValue(name + '　様')
+      .setFontSize(16).setFontWeight('bold').setVerticalAlignment('middle');
 
-    // ── 発行日（右寄せ）
-    var dp = body.appendParagraph(dateStr);
-    dp.setAlignment(R);
-    dp.editAsText().setFontSize(11);
+    // 宛名下線
+    sheet.getRange('B5:C5')
+      .setBorder(false, false, true, false, false, false,
+                 '#000000', SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
 
-    body.appendParagraph('');
-    body.appendParagraph('');
+    // 金額
+    sheet.getRange('B7')
+      .setValue('¥ ' + amtStr + ' -')
+      .setFontSize(22).setFontWeight('bold').setVerticalAlignment('middle');
 
-    // ── 宛名
-    var np = body.appendParagraph(name + '　様');
-    np.setAlignment(L);
-    np.editAsText().setFontSize(15).setBold(true);
+    // 但し書き
+    sheet.getRange('B9')
+      .setValue('但し　2026年度 町内会費として')
+      .setFontSize(11).setVerticalAlignment('middle');
 
-    // ── 区切り線
-    var lp = body.appendParagraph('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    lp.setAlignment(L);
-    lp.editAsText().setFontSize(10);
+    // 受領文
+    sheet.getRange('B11')
+      .setValue('上記の金額を正しく受領いたしました。')
+      .setFontSize(11).setVerticalAlignment('middle');
 
-    body.appendParagraph('');
+    // 発行元（右寄せ）
+    sheet.getRange('C14').setValue('鴨部宮寺町内会')
+      .setFontSize(11).setHorizontalAlignment('right');
+    sheet.getRange('C15').setValue('会長　鎌田　倫嗣')
+      .setFontSize(11).setHorizontalAlignment('right');
 
-    // ── 金額
-    var ap = body.appendParagraph('　金　額　　¥ ' + amtStr + ' -');
-    ap.setAlignment(L);
-    ap.editAsText().setFontSize(22).setBold(true);
+    SpreadsheetApp.flush();
 
-    body.appendParagraph('');
+    // ── PDFエクスポート（UrlFetchApp 経由）
+    var ssId    = ss.getId();
+    var sheetId = sheet.getSheetId();
+    var token   = ScriptApp.getOAuthToken();
+    var exportUrl = 'https://docs.google.com/spreadsheets/d/' + ssId
+      + '/export?format=pdf&id=' + ssId
+      + '&gid='       + sheetId
+      + '&size=A4&portrait=true&fitw=true'
+      + '&gridlines=false&printtitle=false'
+      + '&sheetnames=false&pagenumbers=false';
 
-    // ── 但し書き
-    var bp = body.appendParagraph('但し　2026年度 町内会費として');
-    bp.setAlignment(L);
-    bp.editAsText().setFontSize(12);
+    var response = UrlFetchApp.fetch(exportUrl, {
+      headers: { Authorization: 'Bearer ' + token },
+      muteHttpExceptions: true
+    });
 
-    body.appendParagraph('');
+    var pdfBlob = response.getBlob();
+    pdfBlob.setName('領収書_' + name + '.pdf');
+    pdfBlob.setContentType('application/pdf');
 
-    // ── 受領文
-    var sp = body.appendParagraph('上記の金額を正しく受領いたしました。');
-    sp.setAlignment(L);
-    sp.editAsText().setFontSize(12);
-
-    body.appendParagraph('');
-    body.appendParagraph('');
-    body.appendParagraph('');
-    body.appendParagraph('');
-
-    // ── 発行元（右寄せ）
-    var i1 = body.appendParagraph('鴨部宮寺町内会');
-    i1.setAlignment(R);
-    i1.editAsText().setFontSize(12);
-
-    var i2 = body.appendParagraph('会長　鎌田　倫嗣');
-    i2.setAlignment(R);
-    i2.editAsText().setFontSize(12);
-
-    body.appendParagraph('');
-
-    doc.saveAndClose();
-
-    var pdf = doc.getAs('application/pdf');
-    pdf.setName('領収書_' + name + '.pdf');
-
-    // 一時ドキュメントを削除
-    DriveApp.getFileById(doc.getId()).setTrashed(true);
+    // ── 一時ファイルを削除（Drive REST API経由）
+    UrlFetchApp.fetch(
+      'https://www.googleapis.com/drive/v3/files/' + ssId,
+      { method: 'delete', headers: { Authorization: 'Bearer ' + token }, muteHttpExceptions: true }
+    );
 
     Logger.log('領収書PDF生成成功: ' + name + ' ¥' + amtStr);
-    return pdf;
+    return pdfBlob;
+
   } catch(err) {
     Logger.log('領収書PDF生成失敗: ' + err);
     return null;
+  }
+}
+
+// ── テスト用：GASエディタから直接実行して権限を付与してください ──────
+// 手順: GASエディタ上部の関数選択で「testPdfGeneration」を選び「▶ 実行」を押す
+// → 権限リクエストが表示されたら「許可」→ その後「新しいバージョンとして再デプロイ」
+function testPdfGeneration() {
+  var pdf = createReceiptPdf('テスト 太郎', 2400);
+  if (pdf) {
+    var email = Session.getActiveUser().getEmail();
+    MailApp.sendEmail(email, '【領収書テスト】PDF生成確認', 'テスト用領収書が添付されています。正常に生成されました。', { attachments: [pdf] });
+    Logger.log('テスト成功。' + email + ' へ送信しました。');
+  } else {
+    Logger.log('テスト失敗: createReceiptPdf が null を返しました。エラーログを確認してください。');
   }
 }
 
