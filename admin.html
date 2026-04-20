@@ -453,8 +453,7 @@
     <div class="brand"><i class="bi bi-house-heart me-1"></i><span id="navAssocName">鴨部宮寺町内会</span></div>
     <div class="d-flex align-items-center gap-2">
       <!-- 自動同期インジケーター -->
-      <span id="autoSyncBadge" class="d-none" style="background:rgba(255,255,255,.18);color:white;padding:3px 8px;
-                   border-radius:8px;font-size:.72rem;display:flex!important;align-items:center;gap:4px">
+      <span id="autoSyncBadge" style="display: none; background: rgba(255, 255, 255, 0.18); color: white; padding: 3px 8px; border-radius: 8px; font-size: 0.72rem; align-items: center; gap: 4px;">
         <span class="spinner-border spinner-border-sm" style="width:10px;height:10px;border-width:2px"></span>
         同期中...
       </span>
@@ -752,20 +751,7 @@
                 <th class="text-center">操作</th>
               </tr>
             </thead>
-            <tbody id="tbPayments">
-    <tr class="row-paid">
-      <td><div style="font-weight:600">カマダ ノリツグ</div>
-          <div class="text-muted hide-sm" style="font-size:.75rem">第5班</div></td>
-      <td class="hide-sm" style="color:#64748b;font-size:.85rem">第5班</td>
-      <td class="text-center">
-        <span class="badge-paid"><i class="bi bi-check-circle-fill"></i>済み</span>
-      </td>
-      <td class="text-center hide-sm" style="font-size:.82rem;color:#64748b">2026/04/21</td>
-      <td class="text-center">
-        <button class="btn btn-outline-secondary btn-sm" style="font-size:.78rem;padding:3px 10px" onclick="undoPayment('h_1776719481763_8zolc7')">
-              <i class="bi bi-arrow-counterclockwise"></i>取消</button>
-      </td>
-    </tr></tbody>
+            <tbody id="tbPayments"></tbody>
           </table>
         </div>
       </div>
@@ -782,192 +768,7 @@
       <div class="info-box mb-3" style="font-size:.8rem">
         <i class="bi bi-lightbulb me-1"></i>各班の入力欄から世帯を追加できます。ゴミ箱アイコンで削除できます。
       </div>
-      <div id="accordionHouseholds" class="accordion"><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button " type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-1">
-          <span style="font-weight:700">第1班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-1" class="accordion-collapse collapse show">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-1" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(1)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(1)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-2">
-          <span style="font-weight:700">第2班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-2" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-2" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(2)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(2)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-3">
-          <span style="font-weight:700">第3班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-3" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-3" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(3)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(3)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-4">
-          <span style="font-weight:700">第4班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-4" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-4" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(4)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(4)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-5">
-          <span style="font-weight:700">第5班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">1世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">1済</span>
-        </button>
-      </h2>
-      <div id="sqPane-5" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-5" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(5)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(5)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <div class="household-item">
-                <div style="flex:1;min-width:0">
-                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px">
-                    <span style="font-weight:600">カマダ ノリツグ</span>
-                    <span class="badge-paid ms-1" style="font-size:.65rem"><i class="bi bi-check-circle-fill"></i>支払済</span>
-                    <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem"><i class="bi bi-bag"></i>ごみ袋未配布</span>
-                  </div>
-                  <div style="font-size:.72rem;color:#64748b">¥2,400 ／ 2026/04/21</div>
-                </div>
-                <div class="d-flex align-items-center gap-1">
-                  <button class="btn btn-sm ms-1" style="padding:2px 8px;font-size:.75rem;border:1px solid #cbd5e1;background:#fff" onclick="toggleGarbageBag(5,'h_1776719481763_8zolc7')" title="配布済みにする">
-                    <i class="bi bi-bag-fill"></i>
-                  </button>
-                  <button class="btn btn-outline-danger btn-sm" style="padding:2px 8px;font-size:.8rem" onclick="removeHousehold(5,'h_1776719481763_8zolc7')"><i class="bi bi-trash"></i></button>
-                </div>
-              </div>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-6">
-          <span style="font-weight:700">第6班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-6" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-6" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(6)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(6)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-7">
-          <span style="font-weight:700">第7班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-7" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-7" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(7)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(7)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-8">
-          <span style="font-weight:700">第8班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-8" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-8" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(8)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(8)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-9">
-          <span style="font-weight:700">第9班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-9" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-9" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(9)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(9)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-10">
-          <span style="font-weight:700">第10班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-10" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-10" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(10)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(10)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div></div>
+      <div id="accordionHouseholds" class="accordion"></div>
     </div>
 
     <!-- ── SETTINGS ───────────────────────────────── -->
@@ -1720,7 +1521,7 @@ async function autoSyncOnLogin(){
   const gasUrl=(S.settings.gasUrl||'').trim();
   if(!gasUrl) return;
   const badge=document.getElementById('autoSyncBadge');
-  if(badge) badge.classList.remove('d-none');
+  if(badge) badge.style.display='flex';
   _gasLoading = true;
   renderReports(); // 「読み込み中」スピナーを表示
 
@@ -1761,7 +1562,7 @@ async function autoSyncOnLogin(){
     }
   }finally{
     _gasLoading = false;
-    if(badge) badge.classList.add('d-none');
+    if(badge) badge.style.display='none';
     renderReports(); // スピナーを消して最終結果を表示
   }
 }
