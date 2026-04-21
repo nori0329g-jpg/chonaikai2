@@ -707,6 +707,28 @@
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
       <div id="reportsContainer">
+    <div class="report-card " id="rc-r_1776805188194_e9r62x">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div><span style="font-weight:800;font-size:1rem">のーり</span>
+          <span class="ms-2 badge-pending">
+            <i class="bi bi-clock"></i>未確認</span></div>
+        <span style="font-size:.72rem;color:#94a3b8">2026-04-21T20:59:00.000Z</span>
+      </div>
+      <div class="report-info-row"><i class="bi bi-geo-alt"></i><span>鴨部3丁目15-40-3</span></div>
+      <div class="report-info-row"><i class="bi bi-people"></i><span>第9班</span></div>
+      <div class="report-info-row"><i class="bi bi-telephone"></i><span>9095596226</span></div>
+      <div class="report-info-row"><i class="bi bi-envelope"></i><span>nori.0329g@gmail.com</span></div>
+      <div class="report-info-row"><i class="bi bi-currency-yen"></i><span>¥2,400</span></div>
+      <div class="report-info-row"><i class="bi bi-bag"></i><span>ごみ袋: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
+      <div class="report-info-row"><i class="bi bi-receipt"></i><span>領収書: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
+      
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-success btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776805188194_e9r62x')">
+          <i class="bi bi-check me-1"></i>支払い済みに記録</button>
+        <button class="btn btn-outline-secondary btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1776805188194_e9r62x')">
+          <i class="bi bi-eye me-1"></i>詳細</button>
+      </div>
+    </div>
     <div class="report-card " id="rc-r_1776802557565_banly8">
       <div class="d-flex justify-content-between align-items-start mb-2">
         <div><span style="font-weight:800;font-size:1rem">ぺ</span>
@@ -1235,7 +1257,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge" id="reportBadge">3</span></button>
+      <span class="nav-badge" id="reportBadge">4</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1843,8 +1865,8 @@ function switchTab(name){
 // ── Helpers ──────────────────────────────────────────────────────
 function allHouseholds(){ return S.squads.flatMap(sq=>sq.households.map(h=>({...h,squadName:sq.name,squadId:sq.id}))); }
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
-function todayStr(){ return new Date().toLocaleDateString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-function nowStr(){ return new Date().toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }
+function todayStr(){ return new Date().toLocaleDateString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}); }
+function nowStr(){ return new Date().toLocaleString('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}); }
 
 // ── Dashboard ────────────────────────────────────────────────────
 function renderDashboard(){
