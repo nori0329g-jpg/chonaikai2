@@ -458,7 +458,7 @@
         同期中...
       </span>
       <!-- 最終同期時刻 -->
-      <span id="lastSyncLabel" style="color: rgba(255, 255, 255, 0.65); font-size: 0.68rem; white-space: nowrap; display: inline;">同期済 06:09</span>
+      <span id="lastSyncLabel" style="color: rgba(255, 255, 255, 0.65); font-size: 0.68rem; white-space: nowrap; display: inline;">同期済 06:23</span>
       <!-- 手動更新ボタン（GAS URL設定済みのときのみ表示） -->
       <button class="btn btn-sm" id="btnNavRefresh" onclick="manualRefreshAll()" style="display: inline-flex; background: rgba(255, 255, 255, 0.25); color: white; padding: 3px 10px; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.4); font-weight: 600;">
         <i class="bi bi-arrow-clockwise"></i>
@@ -750,177 +750,7 @@
       <div class="info-box mb-3" style="font-size:.8rem">
         <i class="bi bi-lightbulb me-1"></i>各班の入力欄から世帯を追加できます。ゴミ箱アイコンで削除できます。
       </div>
-      <div id="accordionHouseholds" class="accordion"><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button " type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-1">
-          <span style="font-weight:700">第1班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-1" class="accordion-collapse collapse show">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-1" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(1)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(1)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-2">
-          <span style="font-weight:700">第2班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-2" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-2" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(2)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(2)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-3">
-          <span style="font-weight:700">第3班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-3" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-3" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(3)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(3)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-4">
-          <span style="font-weight:700">第4班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-4" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-4" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(4)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(4)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-5">
-          <span style="font-weight:700">第5班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-5" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-5" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(5)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(5)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-6">
-          <span style="font-weight:700">第6班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-6" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-6" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(6)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(6)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-7">
-          <span style="font-weight:700">第7班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-7" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-7" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(7)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(7)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-8">
-          <span style="font-weight:700">第8班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-8" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-8" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(8)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(8)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-9" aria-expanded="true">
-          <span style="font-weight:700">第9班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-9" class="accordion-collapse collapse show" style="">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-9" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(9)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(9)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div><div class="accordion-item">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sqPane-10">
-          <span style="font-weight:700">第10班</span>
-          <span class="badge bg-secondary ms-2" style="font-size:.72rem">0世帯</span>
-          <span class="badge bg-success ms-1" style="font-size:.72rem">0済</span>
-        </button>
-      </h2>
-      <div id="sqPane-10" class="accordion-collapse collapse ">
-        <div class="accordion-body">
-          <div class="input-group mb-3">
-            <input type="text" class="form-control form-control-sm" id="quickInput-10" placeholder="世帯名を入力して素早く追加" onkeydown="if(event.key==='Enter')quickAdd(10)">
-            <button class="btn btn-outline-primary btn-sm" onclick="quickAdd(10)"><i class="bi bi-plus"></i> 追加</button>
-          </div>
-          <p class="text-center text-muted py-2" style="font-size:.85rem">世帯が登録されていません</p>
-        </div>
-      </div>
-    </div></div>
+      <div id="accordionHouseholds" class="accordion"></div>
     </div>
 
     <!-- ── SETTINGS ───────────────────────────────── -->
@@ -1521,19 +1351,19 @@
       </div>
       <div class="modal-body" id="reportModalBody">
     <div class="report-info-row mb-2"><i class="bi bi-person-fill text-primary" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">お名前</div><strong>鎌田倫嗣</strong></div></div>
+      <div><div style="font-size:.75rem;color:#64748b">お名前</div><strong>あか</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-geo-alt-fill text-danger" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">ご住所</div><strong>鴨部3丁目15-40-3</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-people-fill text-warning" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">班名</div><strong>第9班</strong></div></div>
+      <div><div style="font-size:.75rem;color:#64748b">班名</div><strong>第1班</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-telephone-fill text-success" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">電話番号</div><strong>9095596226</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-envelope-fill text-info" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">メールアドレス</div><strong>nori.0329g@gmail.com</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-clock-fill text-secondary" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">報告日時</div><strong>2026/04/26 05:58</strong></div></div>
+      <div><div style="font-size:.75rem;color:#64748b">報告日時</div><strong>2026/04/26 06:17</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-currency-yen text-warning" style="font-size:1rem;width:20px"></i>
-      <div><div style="font-size:.75rem;color:#64748b">料金</div><strong>¥2,400</strong></div></div>
+      <div><div style="font-size:.75rem;color:#64748b">料金</div><strong>¥1,200 <span class="badge bg-warning text-dark ms-1">割引</span></strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-bag text-info" style="font-size:1rem;width:20px"></i>
       <div><div style="font-size:.75rem;color:#64748b">ごみ袋</div><strong>不要</strong></div></div>
     <div class="report-info-row mb-2"><i class="bi bi-receipt text-primary" style="font-size:1rem;width:20px"></i>
@@ -1843,18 +1673,83 @@ function refreshNavbar(){
 }
 
 // ── 手動更新（ナビバーの「更新」ボタン） ────────────────────────────
+// GASのデータを取得して reports・household paid 状態を一括再構築する
 async function manualRefreshAll(){
-  if(_gasLoading){ toast('同期中です。少しお待ちください','info'); return; }
   const gasUrl=(S.settings.gasUrl||'').trim();
   if(!gasUrl){ toast('GAS URLが設定されていません','warning'); return; }
+
   const btn=document.getElementById('btnNavRefresh');
   const orig=btn?btn.innerHTML:'';
   if(btn){
     btn.disabled=true;
     btn.innerHTML='<span class="spinner-border spinner-border-sm" style="width:14px;height:14px;border-width:2px"></span><span class="ms-1">更新中...</span>';
   }
+
   try{
-    await autoSyncOnLogin();
+    // ── Step1: GASから全レポートを取得 ──
+    const listUrl=gasUrl+'?action=list';
+    let gasReports=null;
+    try{
+      const res=await fetch(listUrl,{credentials:'omit',redirect:'follow'});
+      gasReports=await res.json();
+    }catch(_){
+      try{ gasReports=await gasJsonp(listUrl,15000); }
+      catch(e){ toast('GASへの接続に失敗しました。通信状況を確認してください','danger'); return; }
+    }
+    if(!Array.isArray(gasReports)){ toast('データの取得に失敗しました','danger'); return; }
+
+    // ── Step2: S.reports をGASデータで更新 ──
+    const deleted=S.deletedIds||[];
+    gasReports.forEach(r=>{
+      if(!r.id) return;
+      if(r.deleted){
+        if(!deleted.includes(r.id)) S.deletedIds.push(r.id);
+        S.reports=S.reports.filter(rep=>rep.id!==r.id);
+        return;
+      }
+      if(deleted.includes(r.id)) return;
+      const existing=S.reports.find(lr=>lr.id===r.id);
+      if(!existing){
+        S.reports.push(r);
+      } else {
+        // GASの最新状態で上書き（他端末での確認を反映）
+        if(r.confirmed){ existing.confirmed=true; existing.confirmedAt=r.confirmedAt||existing.confirmedAt; }
+        if(r.feeAmount&&!existing.feeAmount) existing.feeAmount=r.feeAmount;
+        if(r.feeType&&!existing.feeType) existing.feeType=r.feeType;
+        if(r.needsGarbageBag!==undefined&&existing.needsGarbageBag===undefined) existing.needsGarbageBag=r.needsGarbageBag;
+        if(r.needsReceipt!==undefined&&existing.needsReceipt===undefined) existing.needsReceipt=r.needsReceipt;
+      }
+    });
+    S.reports=S.reports.filter(r=>!(S.deletedIds||[]).includes(r.id));
+
+    // ── Step3: 確認済みレポートから household の paid 状態を再構築 ──
+    // 複雑な差分管理をせず「確認済み報告がある世帯=支払い済み」とシンプルに一致させる
+    S.reports.filter(r=>r.confirmed).forEach(r=>{
+      const sq=S.squads.find(sq=>sq.name===r.squadName);
+      if(!sq) return;
+      let h=sq.households.find(h=>h.name===r.name);
+      if(!h){
+        h={id:'h_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+           name:r.name,paid:false,paidDate:null};
+        sq.households.push(h);
+      }
+      if(!h.paid){
+        h.paid=true;
+        h.paidDate=r.reportedAt||r.confirmedAt||nowStr();
+        h.feeType=r.feeType||'normal';
+        h.feeAmount=r.feeAmount||parseInt(S.settings.amount)||0;
+        h.needsGarbageBag=(r.needsGarbageBag===false)?false:true;
+        h.garbageBagDistributed=h.garbageBagDistributed||false;
+      }
+    });
+
+    // ── Step4: 保存して全タブを一括更新 ──
+    save();
+    renderDashboard(); renderReports(); updateReportBadge();
+    renderPayments(); renderHouseholds();
+    _updateLastSyncLabel();
+    toast('最新データに更新しました ✅','success');
+
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML=orig; }
   }
