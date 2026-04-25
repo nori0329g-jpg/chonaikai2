@@ -458,7 +458,7 @@
         同期中...
       </span>
       <!-- 最終同期時刻 -->
-      <span id="lastSyncLabel" style="color: rgba(255, 255, 255, 0.65); font-size: 0.68rem; white-space: nowrap; display: inline;">同期済 06:44</span>
+      <span id="lastSyncLabel" style="color: rgba(255, 255, 255, 0.65); font-size: 0.68rem; white-space: nowrap; display: inline;">同期済 07:12</span>
       <!-- 手動更新ボタン（GAS URL設定済みのときのみ表示） -->
       <button class="btn btn-sm" id="btnNavRefresh" onclick="manualRefreshAll()" style="display: inline-flex; background: rgba(255, 255, 255, 0.25); color: white; padding: 3px 10px; font-size: 0.8rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.4); font-weight: 600;">
         <i class="bi bi-arrow-clockwise"></i>
@@ -688,9 +688,29 @@
         <i class="bi bi-info-circle me-1"></i>
         住民が「支払完了」ボタンを押すとここに表示されます。内容確認後「支払い済みに記録」してください。
       </div>
-      <div id="reportsContainer"><div class="text-center text-muted py-5">
-        <i class="bi bi-bell-slash" style="font-size:2.5rem;display:block;margin-bottom:.5rem;opacity:.4"></i>
-        報告はありません</div></div>
+      <div id="reportsContainer">
+    <div class="report-card " id="rc-r_1777153778525_e0hj1l">
+      <div class="d-flex justify-content-between align-items-start mb-2">
+        <div><span style="font-weight:800;font-size:1rem">鎌田倫嗣</span>
+          <span class="ms-2 badge-pending">
+            <i class="bi bi-clock"></i>未確認</span></div>
+        <span style="font-size:.72rem;color:#94a3b8">2026/04/26 06:49</span>
+      </div>
+      <div class="report-info-row"><i class="bi bi-geo-alt"></i><span>鴨部3丁目15-40-3</span></div>
+      <div class="report-info-row"><i class="bi bi-people"></i><span>第9班</span></div>
+      <div class="report-info-row"><i class="bi bi-telephone"></i><span>9095596226</span></div>
+      <div class="report-info-row"><i class="bi bi-envelope"></i><span>nori.0329g@gmail.com</span></div>
+      <div class="report-info-row"><i class="bi bi-currency-yen"></i><span>¥2,400</span></div>
+      <div class="report-info-row"><i class="bi bi-bag"></i><span>ごみ袋: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
+      <div class="report-info-row"><i class="bi bi-receipt"></i><span>領収書: <span class="badge bg-primary" style="font-size:.68rem">必要</span></span></div>
+      
+      <div class="d-flex gap-2 mt-2">
+        <button class="btn btn-success btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1777153778525_e0hj1l')">
+          <i class="bi bi-check me-1"></i>支払い済みに記録</button>
+        <button class="btn btn-outline-secondary btn-sm" style="font-size:.8rem" onclick="openReportModal('r_1777153778525_e0hj1l')">
+          <i class="bi bi-eye me-1"></i>詳細</button>
+      </div>
+    </div></div>
     </div>
 
     <!-- ── PAYMENTS ───────────────────────────────── -->
@@ -917,7 +937,7 @@
             <input type="url" class="form-control" id="set-gasUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec">
             <div class="form-text">設定後は「住民用HTMLをダウンロード」でファイルを再生成してアップロードしてください</div>
           </div>
-          <div id="gasSetupHelp" class="d-none mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
+          <div id="gasSetupHelp" class="mt-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:1rem;font-size:.83rem;line-height:1.8">
             <strong>🔧 GAS設定手順</strong><br>
             ① <a href="https://sheets.google.com" target="_blank">Google スプレッドシート</a>で新しいシートを作成<br>
             ② メニュー「拡張機能」→「Apps Script」をクリック<br>
@@ -1021,7 +1041,7 @@
   <nav class="bottom-nav">
     <button class="bnb" data-tab="dashboard"><i class="bi bi-speedometer2"></i><span>状況</span></button>
     <button class="bnb" data-tab="reports"><i class="bi bi-bell"></i><span>報告</span>
-      <span class="nav-badge d-none" id="reportBadge">0</span></button>
+      <span class="nav-badge" id="reportBadge">1</span></button>
     <button class="bnb" data-tab="payments"><i class="bi bi-cash-coin"></i><span>支払い</span></button>
     <button class="bnb" data-tab="households"><i class="bi bi-people"></i><span>世帯</span></button>
     <button class="bnb active" data-tab="settings"><i class="bi bi-gear"></i><span>設定</span></button>
@@ -1654,10 +1674,10 @@ function refreshNavbar(){
 }
 
 // ── 手動更新（ナビバーの「更新」ボタン） ────────────────────────────
-// GASのデータを取得して reports・household paid 状態を一括再構築する
+// GASのデータで S.reports を完全置換 → _isPaid/_paidInfo が自動的に最新を反映
 async function manualRefreshAll(){
   const gasUrl=(S.settings.gasUrl||'').trim();
-  if(!gasUrl){ toast('GAS URLが設定されていません','warning'); return; }
+  if(!gasUrl){ toast('GAS URLが設定されていません。設定タブでGAS URLを入力してください','warning'); return; }
 
   const btn=document.getElementById('btnNavRefresh');
   const orig=btn?btn.innerHTML:'';
@@ -1667,7 +1687,7 @@ async function manualRefreshAll(){
   }
 
   try{
-    // ── Step1: GASから全レポートを取得 ──
+    // GASから全レポートを取得（fetch失敗時はJSONPでリトライ）
     const listUrl=gasUrl+'?action=list';
     let gasReports=null;
     try{
@@ -1675,61 +1695,32 @@ async function manualRefreshAll(){
       gasReports=await res.json();
     }catch(_){
       try{ gasReports=await gasJsonp(listUrl,15000); }
-      catch(e){ toast('GASへの接続に失敗しました。通信状況を確認してください','danger'); return; }
+      catch(e){ toast('❌ GASへの接続に失敗しました。GAS URLと通信状況を確認してください','danger'); return; }
     }
-    if(!Array.isArray(gasReports)){ toast('データの取得に失敗しました','danger'); return; }
+    if(!Array.isArray(gasReports)){
+      toast('❌ GASからのデータ形式が不正です。GASを再デプロイしてください','danger'); return;
+    }
 
-    // ── Step2: S.reports をGASデータで更新 ──
-    const deleted=S.deletedIds||[];
-    gasReports.forEach(r=>{
-      if(!r.id) return;
-      if(r.deleted){
-        if(!deleted.includes(r.id)) S.deletedIds.push(r.id);
-        S.reports=S.reports.filter(rep=>rep.id!==r.id);
-        return;
-      }
-      if(deleted.includes(r.id)) return;
-      const existing=S.reports.find(lr=>lr.id===r.id);
-      if(!existing){
-        S.reports.push(r);
-      } else {
-        // GASの最新状態で上書き（他端末での確認を反映）
-        if(r.confirmed){ existing.confirmed=true; existing.confirmedAt=r.confirmedAt||existing.confirmedAt; }
-        if(r.feeAmount&&!existing.feeAmount) existing.feeAmount=r.feeAmount;
-        if(r.feeType&&!existing.feeType) existing.feeType=r.feeType;
-        if(r.needsGarbageBag!==undefined&&existing.needsGarbageBag===undefined) existing.needsGarbageBag=r.needsGarbageBag;
-        if(r.needsReceipt!==undefined&&existing.needsReceipt===undefined) existing.needsReceipt=r.needsReceipt;
-      }
-    });
-    S.reports=S.reports.filter(r=>!(S.deletedIds||[]).includes(r.id));
+    // GASデータで S.reports を完全置換
+    // ・削除済み(deleted:true)は除外
+    // ・deletedIdsに含まれるものは除外
+    // ・GASにない手動追加報告はそのまま保持
+    const del=S.deletedIds||[];
+    const gasIds=new Set(gasReports.filter(r=>r.id).map(r=>r.id));
+    const freshFromGas=gasReports.filter(r=>r.id&&!r.deleted&&!del.includes(r.id));
+    const localOnly=S.reports.filter(r=>r.id&&!gasIds.has(r.id)&&!del.includes(r.id));
+    S.reports=[...freshFromGas,...localOnly];
 
-    // ── Step3: 確認済みレポートから household の paid 状態を再構築 ──
-    // 複雑な差分管理をせず「確認済み報告がある世帯=支払い済み」とシンプルに一致させる
-    S.reports.filter(r=>r.confirmed).forEach(r=>{
-      const sq=S.squads.find(sq=>sq.name===r.squadName);
-      if(!sq) return;
-      let h=sq.households.find(h=>h.name===r.name);
-      if(!h){
-        h={id:'h_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
-           name:r.name,paid:false,paidDate:null};
-        sq.households.push(h);
-      }
-      if(!h.paid){
-        h.paid=true;
-        h.paidDate=r.reportedAt||r.confirmedAt||nowStr();
-        h.feeType=r.feeType||'normal';
-        h.feeAmount=r.feeAmount||parseInt(S.settings.amount)||0;
-        h.needsGarbageBag=(r.needsGarbageBag===false)?false:true;
-        h.garbageBagDistributed=h.garbageBagDistributed||false;
-      }
-    });
-
-    // ── Step4: 保存して全タブを一括更新 ──
+    // 保存して全タブを一括再描画
+    // ※ 支払い表示は _isPaid/_paidInfo が S.reports から自動導出するので
+    //   households の paid フラグを書き換える必要はない
     save();
     renderDashboard(); renderReports(); updateReportBadge();
     renderPayments(); renderHouseholds();
     _updateLastSyncLabel();
-    toast('最新データに更新しました ✅','success');
+
+    const confirmedCount=freshFromGas.filter(r=>r.confirmed).length;
+    toast(`✅ 更新完了：${freshFromGas.length}件取得（確認済み ${confirmedCount}件）`,'success');
 
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML=orig; }
@@ -1758,15 +1749,16 @@ function switchTab(name){
 
 // ── Helpers ──────────────────────────────────────────────────────
 // 確認済み報告がある世帯は paid=true として扱う（クロスデバイス同期の核心）
-// h.paid（手動現金払い記録）または S.reports の確認済み報告どちらでも paid 扱い
-function _isPaid(householdName, squadName){
-  if(!householdName) return false;
-  const del=S.deletedIds||[];
-  return S.reports.some(r=>r.confirmed && !del.includes(r.id) && r.name===householdName && r.squadName===squadName);
-}
+// 班名＋世帯名で検索し、見つからない場合は世帯名のみでも検索（表記ゆれ・端末差異に対応）
 function _paidInfo(householdName, squadName){
+  if(!householdName) return null;
   const del=S.deletedIds||[];
-  return S.reports.find(r=>r.confirmed && !del.includes(r.id) && r.name===householdName && r.squadName===squadName)||null;
+  return S.reports.find(r=>r.confirmed&&!del.includes(r.id)&&r.name===householdName&&r.squadName===squadName)
+      || S.reports.find(r=>r.confirmed&&!del.includes(r.id)&&r.name===householdName)
+      || null;
+}
+function _isPaid(householdName, squadName){
+  return !!_paidInfo(householdName, squadName);
 }
 function allHouseholds(){
   return S.squads.flatMap(sq=>sq.households.map(h=>{
@@ -1928,13 +1920,62 @@ function openPayModal(hid,hname,sqname){
 }
 async function confirmPayment(){
   if(!pendingPayId)return;
-  let hName='',sqName='';
+  let hName='',sqName='',hRef=null;
   for(const sq of S.squads){ const h=sq.households.find(h=>h.id===pendingPayId);
-    if(h){h.paid=true;h.paidDate=nowStr();hName=h.name;sqName=sq.name;break;} }
+    if(h){h.paid=true;h.paidDate=nowStr();hName=h.name;sqName=sq.name;hRef=h;break;} }
   save();
   bootstrap.Modal.getInstance(document.getElementById('modalPayment')).hide();
   toast(`✅ ${hName} の支払いを記録しました`,'success');
   pendingPayId=null; renderPayments(); renderDashboard();
+
+  // ── GAS同期：手動現金払いをGASに登録して他端末の「更新」で反映できるようにする ──
+  const gasUrl=(S.settings.gasUrl||'').trim();
+  if(gasUrl && hName){
+    const rid='manual_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    const ts=nowStr();
+    const feeType=(hRef&&hRef.feeType)||'normal';
+    const feeAmount=String((hRef&&hRef.feeAmount)||parseInt(S.settings.amount)||0);
+    // ① GASにsubmit（skipNotify=true でメール通知スキップ）
+    const p1=new URLSearchParams({
+      action:'submit', id:rid, name:hName, address:'', squadName:sqName,
+      phone:'', email:'', reportedAt:ts,
+      feeType, feeAmount,
+      needsGarbageBag:'true', needsReceipt:'false',
+      garbageBagEnabled:'false',
+      skipNotify:'true'
+    });
+    let submitOk=false;
+    try{
+      const res=await fetch(gasUrl+'?'+p1,{credentials:'omit',redirect:'follow'});
+      const j=await res.json(); submitOk=!!j.success;
+    }catch(_){
+      try{ const j=await gasJsonp(gasUrl+'?'+p1,8000); submitOk=!!(j&&j.success); }
+      catch(e){ console.warn('[手動払い] GAS submit失敗:',e); }
+    }
+    // ② submitが完了したらconfirm（行が存在するはずなので確認済みに更新）
+    const p2=new URLSearchParams({
+      action:'confirm', id:rid, confirmedAt:ts,
+      residentEmail:'', residentName:hName,
+      assocName:S.settings.assocName||'町内会費管理',
+      garbageBagEnabled:'false', needsGarbageBag:'false',
+      needsReceipt:'false', feeAmount, feeType
+    });
+    fetch(gasUrl+'?'+p2,{mode:'no-cors',credentials:'omit'})
+      .catch(()=>fetch(gasUrl+'?'+p2,{credentials:'omit',redirect:'follow'})
+      .catch(e=>console.warn('[手動払い] GAS confirm error',e)));
+    // ③ ローカルのS.reportsにも追加（他機能との整合性維持）
+    if(!S.reports.find(r=>r.id===rid)){
+      S.reports.push({
+        id:rid, name:hName, address:'', squadName:sqName,
+        phone:'', email:'', reportedAt:ts, confirmedAt:ts,
+        confirmed:true, source:'manual',
+        feeType, feeAmount:parseInt(feeAmount)||0,
+        needsGarbageBag:true, needsReceipt:false
+      });
+      save();
+    }
+    if(!submitOk) console.warn('[手動払い] GAS submit未確認。GAS URL・ネットワークを確認してください');
+  }
 }
 function undoPayment(hid){
   for(const sq of S.squads){ const h=sq.households.find(h=>h.id===hid);
@@ -2959,6 +3000,12 @@ function doGet(e) {
       } else {
         Logger.log('notifyEmail: 未設定（テストメール送信 or 設定タブで入力してください）');
       }
+    }
+
+    // skipNotify=true の場合はメール通知をスキップ（管理者による手動現金払い記録）
+    if (p.skipNotify === 'true') {
+      Logger.log('skipNotify=true: 管理者手動記録のためメール通知スキップ id=' + (p.id||''));
+      return out({success: true}, cb);
     }
 
     if (notifyEmail) {
